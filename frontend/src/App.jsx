@@ -18,7 +18,7 @@ import {
   fetchMLMetrics,
   fetchHeatAlerts,
 } from './services/api';
-import { Cpu, Navigation, AlertCircle, Siren } from 'lucide-react';
+import { Cpu, Navigation, AlertCircle, Siren, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('planner'); // 'planner' | 'routing' | 'alerts'
@@ -39,6 +39,7 @@ export default function App() {
   const [metrics, setMetrics] = useState(null);
   const [alertsData, setAlertsData] = useState(null);
   const [selectedAlert, setSelectedAlert] = useState(null);
+  const [sheetOpen, setSheetOpen] = useState(true); // phone bottom sheet
   const [isMetricsOpen, setIsMetricsOpen] = useState(false);
 
   // Loading & error states
@@ -150,7 +151,7 @@ export default function App() {
       {/* Main Workspace Layout */}
       <div style={{ display: 'flex', flex: 1, position: 'relative', overflow: 'hidden' }}>
         {/* Floating Sidebar Controls */}
-        <aside style={{
+        <aside className={`sidebar${sheetOpen ? '' : ' collapsed'}`} style={{
           position: 'absolute',
           top: '16px',
           left: '16px',
@@ -162,8 +163,16 @@ export default function App() {
         }}>
           {/* Navigation Tab Switcher */}
           <div className="glass-panel" style={{ padding: '6px', display: 'flex', gap: '6px' }}>
+            {/* Phone only: collapse the bottom sheet to see more of the map */}
             <button
-              onClick={() => setActiveTab('planner')}
+              className="mobile-only sheet-toggle"
+              onClick={() => setSheetOpen((open) => !open)}
+              aria-label={sheetOpen ? 'Hide panel' : 'Show panel'}
+            >
+              {sheetOpen ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+            </button>
+            <button
+              onClick={() => { setActiveTab('planner'); setSheetOpen(true); }}
               style={{
                 flex: 1,
                 padding: '8px 12px',
@@ -186,7 +195,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('routing')}
+              onClick={() => { setActiveTab('routing'); setSheetOpen(true); }}
               style={{
                 flex: 1,
                 padding: '8px 12px',
@@ -209,7 +218,7 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setActiveTab('alerts')}
+              onClick={() => { setActiveTab('alerts'); setSheetOpen(true); }}
               style={{
                 flex: 1,
                 padding: '8px 12px',
@@ -267,7 +276,11 @@ export default function App() {
             <AlertsPanel
               alertsData={alertsData}
               selectedAlert={selectedAlert}
-              onSelectAlert={setSelectedAlert}
+              onSelectAlert={(alert) => {
+                setSelectedAlert(alert);
+                // On phones, lower the sheet so the map can show where it flew to
+                if (window.matchMedia('(max-width: 640px)').matches) setSheetOpen(false);
+              }}
             />
           )}
 

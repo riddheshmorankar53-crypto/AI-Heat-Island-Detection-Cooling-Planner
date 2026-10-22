@@ -189,3 +189,92 @@ body {
   margin: 12px 14px !important;
   line-height: 1.5 !important;
 }
+
+/* Phone layout: header slims down, sidebar becomes a collapsible bottom sheet.
+   !important is needed because the desktop layout lives in inline styles. */
+.mobile-only {
+  display: none !important;
+}
+
+@media (max-width: 640px) {
+  .hide-mobile {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: inline-flex !important;
+  }
+
+  .app-header {
+    height: 52px !important;
+    padding: 0 12px !important;
+  }
+
+  .app-header h1 {
+    font-size: 1rem !important;
+  }
+
+  .sidebar {
+    top: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: auto !important;
+    max-height: 55vh;
+    overflow-y: auto;
+    gap: 8px !important;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-color);
+    border-radius: 14px 14px 0 0;
+  }
+
+  /* The sheet scrolls as a whole; inner panels no longer need their own scroll */
+  .sidebar .glass-panel {
+    max-height: none !important;
+  }
+
+  /* Collapsed: only the tab bar stays, the map gets the screen */
+  .sidebar.collapsed > :not(:first-child) {
+    display: none !important;
+  }
+
+  .sheet-toggle {
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+
+  /* Tabs: icon + short label fit three across */
+  .sidebar > .glass-panel:first-child button {
+    padding: 8px 6px !important;
+    font-size: 0.74rem !important;
+  }
+
+  /* Sheet sits above Leaflet's controls; attribution (required by OSM/Esri) rides just
+     above the collapsed tab bar, and the open sheet covers it while in use */
+  .sidebar {
+    z-index: 1100 !important;
+  }
+
+  .leaflet-bottom {
+    bottom: 76px;
+  }
+
+  .leaflet-control-attribution {
+    font-size: 9px;
+  }
+
+  /* Legend moves to the top-right so the sheet does not cover it */
+  .map-legend {
+    top: 10px !important;
+    bottom: auto !important;
+    right: 10px !important;
+    padding: 6px 10px !important;
+  }
+}

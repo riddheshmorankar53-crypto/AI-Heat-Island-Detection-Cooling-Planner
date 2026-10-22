@@ -3,7 +3,7 @@ import { Flame, ShieldCheck, MapPin, Database, Award, BarChart3 } from 'lucide-r
 
 export default function Header({ summary, dbStatus, onOpenMetrics }) {
   return (
-    <header style={{
+    <header className="app-header" style={{
       height: '64px',
       background: 'rgba(11, 15, 25, 0.95)',
       borderBottom: '1px solid var(--border-color)',
@@ -32,9 +32,9 @@ export default function Header({ summary, dbStatus, onOpenMetrics }) {
             <h1 style={{ fontSize: '1.15rem', fontWeight: 700, letterSpacing: '-0.02em' }}>
               Urban Cooling Planner
             </h1>
-            <span className="badge badge-emerald">AI + GIS + Graph ML</span>
+            <span className="badge badge-emerald hide-mobile">AI + GIS + Graph ML</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+          <div className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
               <MapPin size={12} color="#10b981" /> Pilot City: Pune, Maharashtra (Central Core AOI)
             </span>
@@ -49,7 +49,7 @@ export default function Header({ summary, dbStatus, onOpenMetrics }) {
       {/* Live Stats Badges */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         {summary && (
-          <>
+          <div className="hide-mobile" style={{ display: 'contents' }}>
             <div style={{
               background: 'rgba(255, 255, 255, 0.05)',
               border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -94,12 +94,13 @@ export default function Header({ summary, dbStatus, onOpenMetrics }) {
                 {summary.vulnerable_population_at_risk?.toLocaleString()} residents
               </span>
             </div>
-          </>
+          </div>
         )}
 
-        <button className="btn-secondary" onClick={onOpenMetrics}>
+        <button className="btn-secondary" onClick={onOpenMetrics} aria-label="Model Metrics & Transparency">
           <BarChart3 size={15} color="#34d399" />
-          <span>Model Metrics & Transparency</span>
+          <span className="hide-mobile">Model Metrics & Transparency</span>
+          <span className="mobile-only">Metrics</span>
         </button>
       </div>
     </header>

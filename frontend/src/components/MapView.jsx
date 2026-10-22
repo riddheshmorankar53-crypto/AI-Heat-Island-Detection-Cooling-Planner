@@ -304,7 +304,7 @@ export default function MapView({
       </MapContainer>
 
       {/* Map Legend Overlay */}
-      <div className="glass-panel" style={{
+      <div className="glass-panel map-legend" style={{
         position: 'absolute',
         bottom: '28px',
         right: '20px',

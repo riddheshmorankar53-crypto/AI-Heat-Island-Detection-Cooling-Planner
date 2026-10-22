@@ -67,7 +67,7 @@ flowchart LR
      - **Heat-Safe Route**: Minimizes direct solar thermal exposure and maximizes tree canopy shade, e.g. Shaniwar Wada → Pune Station: 12.9% less heat load for a 159m detour along the river corridor.
 
 5. **Interactive Full-Stack GIS Dashboard (`/frontend` + `/backend`)**:
-   - **Frontend**: React + Vite + Leaflet with dynamic choropleths (LST, NDVI, HVI, Hotspots), intervention influence radius buffers, route comparison lines, budget sliders, and a Model Transparency Modal.
+   - **Frontend**: React + Vite + Leaflet with dynamic choropleths (LST, NDVI, HVI, Hotspots), intervention influence radius buffers, route comparison lines, budget sliders, and a Model Transparency Modal. Works on phones: below 640px the controls become a collapsible bottom sheet under the map.
    - **Backend**: FastAPI REST service serving the grid from an in-memory GeoPandas frame (no database needed; the data pipeline can optionally export to PostGIS).
 
 6. **Heat Hazard Alerts (`GET /api/v1/alerts`)**:
