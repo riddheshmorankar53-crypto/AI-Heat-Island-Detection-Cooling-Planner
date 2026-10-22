@@ -50,6 +50,8 @@ jobs:
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
+          # CPU-only PyTorch: tests need no GPU, and it skips ~2GB of CUDA wheels
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -e ".[dev]"
 
       - name: Generate Synthetic Grid & Network Data

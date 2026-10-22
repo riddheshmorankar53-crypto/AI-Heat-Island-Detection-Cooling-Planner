@@ -33,6 +33,7 @@ dependencies = [
     "planetary-computer>=1.0.0",
     "rasterio>=1.4.0",
     "sqlalchemy>=2.0.0",
+    "pyarrow>=14.0.0",
 ]
 
 [project.optional-dependencies]
