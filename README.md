@@ -1,6 +1,8 @@
 # Urban Cooling Planner: AI + GIS + Graph ML System
 **Pilot City: Pune, India (Central Core AOI)**
 
+**🌐 Live demo: https://pune-cooling-planner.onrender.com** (free tier: the first visit after ~15 idle minutes takes about a minute to wake up)
+
 An end-to-end urban climate resilience system that detects urban heat island (UHI) hotspots, identifies vulnerable communities, recommends cooling interventions (trees, cool roofs, misting/water points, shaded transit shelters, and community cooling centers) under municipal budget constraints, and provides citizens with heat-safe pedestrian walking routes.
 
 
