@@ -158,6 +158,8 @@ docker compose up --build
 
 ## 🌍 Deploy a Live Demo (Render, free)
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/riddheshmorankar53-crypto/AI-Heat-Island-Detection-Cooling-Planner)
+
 `render.yaml` is a Render Blueprint for the same container:
 1. Sign in at [render.com](https://render.com) with GitHub.
 2. **New → Blueprint**, pick this repository, then **Apply**.
