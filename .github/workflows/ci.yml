@@ -82,3 +82,24 @@ jobs:
       - name: Build Vite Production Bundle
         working-directory: ./frontend
         run: npm run build
+
+  docker-image:
+    name: Deploy Image Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build single-container image (what Render deploys)
+        run: docker build -t pune-cooling-planner .
+
+      - name: Serve with an injected PORT and probe API + dashboard
+        run: |
+          docker run -d --name app -e PORT=10000 -p 10000:10000 pune-cooling-planner
+          for i in $(seq 1 30); do curl -sf localhost:10000/api/v1/health && break; sleep 2; done
+          curl -sf localhost:10000/api/v1/health
+          curl -sf localhost:10000/ | grep -q "<div id=\"root\">"
+          curl -sf -X POST localhost:10000/api/v1/interventions/optimize \
+            -H 'Content-Type: application/json' \
+            -d '{"budget_inr":1500000,"enabled_types":["trees","shaded_stops"],"max_interventions_per_cell":1}' \
+            | grep -q '"status":"OPTIMAL"'

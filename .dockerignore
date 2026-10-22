@@ -1,0 +1,13 @@
+.git
+**/__pycache__
+**/node_modules
+frontend/dist
+.pytest_cache
+.ruff_cache
+cache
+graphify-out
+data/raw
+data/processed/*.parquet
+notebooks
+viz
+.env

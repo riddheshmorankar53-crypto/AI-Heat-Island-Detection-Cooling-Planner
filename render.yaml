@@ -1,0 +1,10 @@
+# Render Blueprint: Dashboard -> New -> Blueprint -> pick this repo.
+# Free web services sleep after ~15 min idle; the first request then takes ~1 min.
+services:
+  - type: web
+    name: pune-cooling-planner
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/health
+    autoDeploy: true

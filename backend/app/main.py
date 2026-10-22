@@ -12,6 +12,7 @@ if str(BASE_DIR) not in sys.path:
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from backend.app.config import settings
 from backend.app.database import spatial_db
@@ -51,6 +52,13 @@ def health_check():
         "pilot_city": "Pune, India",
         "database": db_status,
     }
+
+
+# Serve the built dashboard from the same origin (single-container deploy). Mounted last
+# so every /api route above takes precedence.
+FRONTEND_DIST = BASE_DIR / "frontend" / "dist"
+if FRONTEND_DIST.is_dir():
+    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="dashboard")
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@ import numpy as np
 from ortools.linear_solver import pywraplp
 
 METRICS_PATH = Path(__file__).resolve().parent.parent / "artifacts" / "metrics.json"
+MIP_RELATIVE_GAP = 0.01  # accept plans within 1% of the best possible benefit score
 # Calibration knob: canopy one ₹15,000 tree unit adds across its 50m influence area at
 # maturity (~25 street trees ≈ 750 m² crown ≈ 10% of 7,850 m²). Tune to local costs.
 TREE_CANOPY_GAIN_PCT_PER_UNIT = 10.0
@@ -223,9 +224,14 @@ class CoolingInterventionOptimizer:
             benefit_score = 500.0 * (delta_t * vuln * area_weight) + 0.5 * (pop * (radius / 50.0))
             objective.SetCoefficient(var, float(benefit_score))
 
-        # Solve
-        solver.set_time_limit(10000)  # max 10s
-        status = solver.Solve()
+        # Solve to within 1% of optimal: proving the last fraction of a percent on this
+        # knapsack (many near-equal scores) took the full time limit for little gain.
+        # Small budgets (<₹8L) still stop at the limit; their plans were identical at
+        # 3s and 10s (within ~1.5-3.5% of the bound), so 5s leaves slow-CPU headroom.
+        solver.set_time_limit(5000)
+        params = pywraplp.MPSolverParameters()
+        params.SetDoubleParam(params.RELATIVE_MIP_GAP, MIP_RELATIVE_GAP)
+        status = solver.Solve(params)
 
         # Extract recommendations
         selected_features = []

@@ -101,8 +101,10 @@ Every model input is now observed data. The one exception is the vulnerable-popu
 
 ### Step 1: Install Python Dependencies
 ```bash
-pip install -r backend/requirements.txt
+# Full set: data pipeline, model training, tests and the API
+pip install -e ".[dev]"
 ```
+(`backend/requirements.txt` holds only the API's runtime dependencies, used by the Docker image.)
 
 ### Step 2: Generate Grid & Train Models (Reproducible Pipeline)
 ```bash
@@ -134,14 +136,25 @@ Open `http://localhost:5173` in your browser.
 
 ---
 
-## 🐳 Docker Compose (Alternative)
+## 🐳 Docker (Alternative)
 
-To launch the full stack (FastAPI backend and Nginx frontend):
+One container builds the React dashboard and serves it together with the API:
 ```bash
 docker compose up --build
 ```
-- Frontend: `http://localhost:5173`
-- Backend API: `http://localhost:8000/docs`
+- Dashboard: `http://localhost:8000`
+- API docs: `http://localhost:8000/docs`
+
+---
+
+## 🌍 Deploy a Live Demo (Render, free)
+
+`render.yaml` is a Render Blueprint for the same container:
+1. Sign in at [render.com](https://render.com) with GitHub.
+2. **New → Blueprint**, pick this repository, then **Apply**.
+3. When the build finishes, open `https://<service-name>.onrender.com`.
+
+Free instances sleep after ~15 minutes idle, so the first visit afterwards takes about a minute. The API idles at ~125 MB and peaks around 330 MB (512 MB limit); optimizer runs are serialised because each solve holds ~100 MB.
 
 ---
 
@@ -197,8 +210,7 @@ All 32 tests cover:
 │   │   ├── forecast.py           # Open-Meteo 3-day forecast for heatwave escalation
 │   │   ├── schemas/              # Pydantic request/response schemas
 │   │   └── routers/              # Grid, Interventions, Routing, Metrics endpoints
-│   ├── Dockerfile
-│   └── requirements.txt
+│   └── requirements.txt          # API runtime dependencies (Docker image)
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
@@ -212,7 +224,6 @@ All 32 tests cover:
 │   │   ├── services/api.js       # Backend REST API client
 │   │   ├── App.jsx
 │   │   └── index.css             # Glassmorphism dark UI styling
-│   ├── Dockerfile
 │   ├── package.json
 │   └── vite.config.js
 ├── notebooks/
@@ -222,7 +233,9 @@ All 32 tests cover:
 │   ├── mathematical_formulation.md# Equations for HVI, MILP solver & routing
 │   └── api_reference.md          # Complete REST API reference
 ├── tests/                        # 32 unit and integration tests
-├── docker-compose.yml            # Backend & frontend
+├── Dockerfile                    # Single container: dashboard + API
+├── render.yaml                   # Render Blueprint (free live demo)
+├── docker-compose.yml            # Runs the Dockerfile locally
 └── .env.example                  # Environment configuration template
 ```
 
