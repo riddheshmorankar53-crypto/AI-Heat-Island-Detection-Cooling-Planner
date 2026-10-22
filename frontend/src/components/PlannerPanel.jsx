@@ -107,7 +107,16 @@ export default function PlannerPanel({
                 <span style={{ fontSize: '0.78rem', fontWeight: 500 }}>{item.name}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.72rem' }}>
-                <span style={{ color: '#34d399' }}>-{item.delta_celsius}°C</span>
+                <span style={{ color: '#34d399' }} title={item.basis}>
+                  -{item.delta_celsius}°C
+                  <span style={{
+                    marginLeft: '4px',
+                    fontSize: '0.62rem',
+                    color: item.basis?.startsWith('Measured') ? '#34d399' : 'var(--text-muted)',
+                  }}>
+                    {item.basis?.startsWith('Measured') ? 'measured' : 'assumed'}
+                  </span>
+                </span>
                 <span style={{ color: 'var(--text-muted)' }}>{formatLakhs(item.cost_inr)}</span>
               </div>
             </div>

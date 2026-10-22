@@ -63,7 +63,7 @@ Maximize the combined heat reduction, demographic vulnerability relief, and spat
 
 $$\max \sum_{i=1}^N \sum_{k \in \mathcal{K}} \left[ \alpha \cdot \left( \Delta T_k \cdot \text{HVI}_i \cdot \left(\frac{R_k}{50}\right)^{1.5} \right) + \beta \cdot \left( \text{Pop}_i \cdot \frac{R_k}{50} \right) \right] x_{i, k}$$
 
-where $\Delta T_k$ is the empirical cooling drop (°C), $R_k$ is the physical radius of influence (meters), $\text{HVI}_i$ is cell heat vulnerability, and $\text{Pop}_i$ is the resident population.
+where $\Delta T_k$ is the cooling per unit (°C): measured for trees ($-\beta_{\text{canopy}} \times$ canopy gain per unit, where $\beta_{\text{canopy}}$ is the within-500m-block regression slope of LST on canopy %, controlling for impervious cover and elevation; see `ml/optimizer/calibration.py`), and a literature assumption for the other four, $R_k$ is the physical radius of influence (meters), $\text{HVI}_i$ is cell heat vulnerability, and $\text{Pop}_i$ is the resident population.
 
 ---
 

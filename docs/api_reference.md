@@ -102,7 +102,7 @@ Cells more than 400 m (a 5-minute walk) from a cooling facility get a "deploy te
 ## 3. Cooling Intervention Optimization
 
 ### `GET /interventions/catalog`
-Catalog of cooling interventions with unit costs and expected cooling deltas.
+Catalog of cooling interventions with unit costs, expected cooling deltas, and a `basis` string saying whether each delta was measured on the Pune grid (trees) or is a literature assumption.
 
 ### `POST /interventions/optimize`
 Solves Google OR-Tools Mixed-Integer Linear Program for intervention placement under municipal budget.

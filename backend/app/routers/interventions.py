@@ -26,6 +26,7 @@ def get_catalog() -> Dict[str, Any]:
             "name": v["name"],
             "cost_inr": v["cost_inr"],
             "delta_celsius": v["delta_celsius"],
+            "basis": v["basis"],
             "influence_radius_m": v["influence_radius_m"],
             "color": v["color"],
             "icon": v["icon"],

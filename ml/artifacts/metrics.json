@@ -78,5 +78,16 @@
       "train_rmse": 1.0681,
       "val_rmse": 1.0987
     }
+  },
+  "intervention_effects": {
+    "tree_canopy": {
+      "lst_change_per_canopy_pct": -0.0287,
+      "ci95": [
+        -0.0335,
+        -0.024
+      ],
+      "n_cells": 3904,
+      "method": "OLS with 500m-block fixed effects, controls: impervious_pct, elevation_m"
+    }
   }
 }

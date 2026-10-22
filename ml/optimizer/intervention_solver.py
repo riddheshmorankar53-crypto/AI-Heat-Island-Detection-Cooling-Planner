@@ -3,17 +3,47 @@ Google OR-Tools Mixed-Integer Linear Programming (MILP) solver for
 urban cooling intervention planning under municipal budget constraints.
 """
 
+import json
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import geopandas as gpd
 import numpy as np
 from ortools.linear_solver import pywraplp
 
+METRICS_PATH = Path(__file__).resolve().parent.parent / "artifacts" / "metrics.json"
+# Calibration knob: canopy one ₹15,000 tree unit adds across its 50m influence area at
+# maturity (~25 street trees ≈ 750 m² crown ≈ 10% of 7,850 m²). Tune to local costs.
+TREE_CANOPY_GAIN_PCT_PER_UNIT = 10.0
+TREE_LITERATURE_DELTA_C = 1.5
+LITERATURE_BASIS = "Literature assumption (not measurable from satellite LST)"
+
+
+def _tree_cooling() -> Tuple[float, str]:
+    """Tree cooling per unit from the canopy effect measured on the Pune grid by ml/train.py."""
+    try:
+        effect = json.loads(METRICS_PATH.read_text(encoding="utf-8"))["intervention_effects"][
+            "tree_canopy"
+        ]
+    except (OSError, KeyError, ValueError):
+        return TREE_LITERATURE_DELTA_C, "Literature assumption (run ml/train.py to measure)"
+    per_pct = -effect["lst_change_per_canopy_pct"]
+    lo, hi = sorted(-c * TREE_CANOPY_GAIN_PCT_PER_UNIT for c in effect["ci95"])
+    basis = (
+        f"Measured in Pune: {per_pct:.3f}°C per +1% canopy x {TREE_CANOPY_GAIN_PCT_PER_UNIT:g}% "
+        f"per unit (95% CI {lo:.2f}-{hi:.2f}°C)"
+    )
+    return round(per_pct * TREE_CANOPY_GAIN_PCT_PER_UNIT, 2), basis
+
+
+_TREE_DELTA, _TREE_BASIS = _tree_cooling()
+
 INTERVENTION_CATALOG: Dict[str, Dict[str, Any]] = {
     "trees": {
         "name": "Urban Tree Canopy",
         "cost_inr": 15000.0,
-        "delta_celsius": 1.5,
+        "delta_celsius": _TREE_DELTA,
+        "basis": _TREE_BASIS,
         "influence_radius_m": 50.0,
         "suitability": lambda row: row["tree_canopy_pct"] <= 35.0,
         "color": "#10b981",  # emerald
@@ -23,6 +53,7 @@ INTERVENTION_CATALOG: Dict[str, Dict[str, Any]] = {
         "name": "High-Albedo Cool Roofs",
         "cost_inr": 35000.0,
         "delta_celsius": 2.2,
+        "basis": "Literature assumption (cross-section confounded: bright bare soil is hot)",
         "influence_radius_m": 30.0,
         "suitability": lambda row: row["impervious_pct"] >= 45.0,
         "color": "#06b6d4",  # cyan
@@ -32,6 +63,7 @@ INTERVENTION_CATALOG: Dict[str, Dict[str, Any]] = {
         "name": "Misting & Hydration Station",
         "cost_inr": 50000.0,
         "delta_celsius": 1.0,
+        "basis": LITERATURE_BASIS,
         "influence_radius_m": 40.0,
         "suitability": lambda row: row["heat_vulnerability_index"] >= 0.45,
         "color": "#3b82f6",  # blue
@@ -41,6 +73,7 @@ INTERVENTION_CATALOG: Dict[str, Dict[str, Any]] = {
         "name": "Shaded Transit Stops",
         "cost_inr": 80000.0,
         "delta_celsius": 2.0,
+        "basis": LITERATURE_BASIS,
         "influence_radius_m": 60.0,
         "suitability": lambda row: (
             bool(row["is_transit_hub"]) or (row["pop_density_sqkm"] >= 20000)
@@ -52,6 +85,7 @@ INTERVENTION_CATALOG: Dict[str, Dict[str, Any]] = {
         "name": "Community Cooling Refuge",
         "cost_inr": 250000.0,
         "delta_celsius": 4.5,
+        "basis": LITERATURE_BASIS,
         "influence_radius_m": 350.0,
         "suitability": lambda row: row["heat_vulnerability_index"] >= 0.65,
         "color": "#ec4899",  # pink

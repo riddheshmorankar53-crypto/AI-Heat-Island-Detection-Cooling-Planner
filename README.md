@@ -58,6 +58,7 @@ flowchart LR
    - Solves a Mixed-Integer Linear Program (MILP) using SCIP/CBC.
    - Allocates 5 distinct cooling interventions (Urban Trees, Cool Roofs, Misting Points, Shaded Stops, and Cooling Refuges) within municipal budgets (e.g. ₹5 Lakh to ₹50 Lakh).
    - Enforces portfolio diversity, spatial suitability, per-cell limits, and 400m minimum separation between cooling refuges.
+   - **Measured vs assumed cooling**: `ml/train.py` measures the tree effect on the real grid, comparing cells within the same 500m block and controlling for impervious cover and elevation: **0.029°C cooler per +1% canopy** (95% CI 0.024–0.034). With an assumed +10% canopy per ₹15,000 unit (`TREE_CANOPY_GAIN_PCT_PER_UNIT`, a tunable setting), trees give ~0.29°C per unit, about 5× less than the 1.5°C previously assumed. Cool roofs can't be measured from a single snapshot (Pune's brightest surfaces are hot bare soil), and misting, shade and refuges cool people rather than the land surface, so those four remain literature assumptions. The planner labels each value *measured* or *assumed*, and `GET /interventions/catalog` returns the basis.
 
 4. **Heat-Safe Pedestrian Routing Engine (`/ml/routing`)**:
    - Real OpenStreetMap walking network (`--live`: 8,809 intersections, 11,710 street segments). Each street's shade and temperature are read from the real grid cells it passes through, sampled every 20m. Named landmarks snap to the nearest street node.

@@ -24,6 +24,7 @@ from ml.features.builder import FEATURE_COLUMNS, SpatialFeaturePipeline
 from ml.models.baseline import BaselineHotspotClassifier, BaselineLSTModel
 from ml.models.gradient_boost import GradientBoostHotspotClassifier, GradientBoostLSTModel
 from ml.models.spatial_gnn import SpatialGNNTrainer, build_spatial_adjacency
+from ml.optimizer.calibration import estimate_canopy_cooling
 
 
 def run_training_pipeline() -> None:
@@ -200,7 +201,13 @@ def run_training_pipeline() -> None:
         **gnn_train_res,
     }
 
-    # 7. Persist real metrics JSON
+    # 7. Measured intervention effects (used by the optimizer's tree catalog entry)
+    print("\n--- Measuring tree canopy cooling effect ---")
+    canopy_effect = estimate_canopy_cooling(gdf, seed=seed)
+    print(f"Canopy effect: {canopy_effect}")
+    metrics_payload["intervention_effects"] = {"tree_canopy": canopy_effect}
+
+    # 8. Persist real metrics JSON
     metrics_file = artifacts_dir / "metrics.json"
     with open(metrics_file, "w", encoding="utf-8") as f:
         json.dump(metrics_payload, f, indent=2)
