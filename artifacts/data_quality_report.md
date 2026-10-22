@@ -1,7 +1,7 @@
 # Urban Cooling Planner - Data Quality & Feature Engineering Report
 **City**: Pune, Maharashtra, India  
 **Target AOI**: Central Core (Lat 18.4900°N - 18.5450°N, Lon 73.8250°E - 73.8850°E)  
-**CRS**: Output `EPSG:4326` | Internal Metric `EPSG:32643` (UTM 43N)  
+**CRS**: Output `{"$schema": "https://proj.org/schemas/v0.7/projjson.schema.json", "type": "GeographicCRS", "name": "WGS 84", "datum_ensemble": {"name": "World Geodetic System 1984 ensemble", "members": [{"name": "World Geodetic System 1984 (Transit)"}, {"name": "World Geodetic System 1984 (G730)"}, {"name": "World Geodetic System 1984 (G873)"}, {"name": "World Geodetic System 1984 (G1150)"}, {"name": "World Geodetic System 1984 (G1674)"}, {"name": "World Geodetic System 1984 (G1762)"}, {"name": "World Geodetic System 1984 (G2139)"}, {"name": "World Geodetic System 1984 (G2296)"}], "ellipsoid": {"name": "WGS 84", "semi_major_axis": 6378137, "inverse_flattening": 298.257223563}, "accuracy": "2.0", "id": {"authority": "EPSG", "code": 6326}}, "coordinate_system": {"subtype": "ellipsoidal", "axis": [{"name": "Geodetic latitude", "abbreviation": "Lat", "direction": "north", "unit": "degree"}, {"name": "Geodetic longitude", "abbreviation": "Lon", "direction": "east", "unit": "degree"}]}, "scope": "Horizontal component of 3D system.", "area": "World.", "bbox": {"south_latitude": -90, "west_longitude": -180, "north_latitude": 90, "east_longitude": 180}, "id": {"authority": "EPSG", "code": 4326}}` | Internal Metric `EPSG:32643` (UTM 43N)  
 **Grid Resolution**: 100m x 100m ($10,000 m^2$ per cell)  
 **Total Grid Cells**: 3,904  
 **Geometry Validity**: 3904/3904 valid (100%)  
@@ -11,29 +11,28 @@
 
 ## 1. Feature Distribution & Data Quality Summary
 
-| Feature Name | Min | Q1 (25%) | Median | Q3 (75%) | Max | IQR | Mean ± Std | Missing % | Proxy? |
+| Feature Name | Min | Q1 (25%) | Median | Q3 (75%) | Max | IQR | Mean ± Std | Missing % | Source |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `tree_canopy_pct` | 0.00 | 12.00 | 31.00 | 52.00 | 100.00 | 40.00 | 33.97 ± 25.56 | 0.0% | No |
-| `elevation_m` | 533.30 | 558.80 | 567.00 | 578.40 | 682.90 | 19.60 | 569.41 ± 16.72 | 0.0% | No |
-| `population` | 0.00 | 109.00 | 295.00 | 466.00 | 776.00 | 357.00 | 300.17 ± 211.19 | 0.0% | No |
-| `heat_vulnerability_index` | 0.24 | 0.46 | 0.54 | 0.62 | 0.77 | 0.15 | 0.54 ± 0.10 | 0.0% | No |
+| `lst_celsius` | 33.67 | 39.61 | 41.19 | 42.75 | 50.37 | 3.14 | 41.19 ± 2.31 | 0.0% | Landsat 8/9 C2 L2 |
+| `ndvi` | 0.04 | 0.23 | 0.32 | 0.41 | 0.82 | 0.18 | 0.33 ± 0.13 | 0.0% | Sentinel-2 L2A |
+| `ndbi` | -0.34 | -0.07 | -0.02 | 0.04 | 0.30 | 0.11 | -0.02 ± 0.09 | 0.0% | Sentinel-2 L2A |
+| `albedo` | 0.04 | 0.14 | 0.15 | 0.16 | 0.22 | 0.02 | 0.15 ± 0.02 | 0.0% | Sentinel-2 L2A |
+| `tree_canopy_pct` | 0.00 | 12.00 | 31.00 | 52.00 | 100.00 | 40.00 | 33.97 ± 25.56 | 0.0% | Sentinel-2 L2A (NDVI > 0.4) |
+| `impervious_pct` | 0.00 | 4.00 | 19.00 | 47.00 | 100.00 | 43.00 | 27.91 ± 27.28 | 0.0% | Sentinel-2 L2A (NDBI > 0, NDVI < 0.2) |
+| `elevation_m` | 533.30 | 558.80 | 567.00 | 578.40 | 682.90 | 19.60 | 569.41 ± 16.72 | 0.0% | Copernicus GLO-30 |
+| `population` | 0.00 | 109.00 | 295.00 | 466.00 | 776.00 | 357.00 | 300.17 ± 211.19 | 0.0% | Meta HRSL |
+| `pop_density_sqkm` | 0.00 | 10870.00 | 29503.00 | 46584.00 | 77640.00 | 35714.00 | 30016.69 ± 21119.79 | 0.0% | Meta HRSL |
+| `vuln_population_ratio` | 0.17 | 0.18 | 0.18 | 0.18 | 0.18 | 0.00 | 0.18 ± 0.00 | 0.0% | Meta HRSL (district-level share) |
+| `dist_cooling_facility_m` | 0.00 | 73.50 | 135.10 | 226.83 | 925.70 | 153.33 | 170.81 ± 137.96 | 0.0% | OpenStreetMap |
+| `heat_vulnerability_index` | 0.24 | 0.46 | 0.54 | 0.62 | 0.77 | 0.15 | 0.54 ± 0.10 | 0.0% | Derived |
 
 ---
 
-## 2. Demographic & Physical Proxies Documentation
+## 2. Data Sources
 
-The following features are modeled proxies clearly designated to comply with transparency and ethical AI principles:
-
-1. **`pct_children` (% Population < 5 years)**:
-   - **Rationale**: Census Ward baseline for Pune (~8.5%) adjusted by residential tenement density and informal settlement presence. High concentrations observed in high-density Peth areas.
-2. **`pct_elderly` (% Population > 65 years)**:
-   - **Rationale**: Derived from Pune central tenure patterns (~7.8% baseline) where older traditional neighborhoods (Sadashiv, Narayan, Shaniwar Peths) exhibit higher elderly permanence compared to newly developed transit nodes.
-3. **`low_income_proxy` (Index 0.0 - 1.0)**:
-   - **Rationale**: Synthesized using micro-morphological indicators: percentage of building footprints < 40m², high built density (>0.60), and lack of formal tree canopy cover.
-4. **`sky_view_factor` (Canyon SVF 0.0 - 1.0)**:
-   - **Rationale**: Geometric canyon proxy computed via building density and mean building height:
-     `SVF = 1.0 - 0.70 * density * min(1.0, height / 25.0)`
-     Captures severe urban canyon radiation trapping in narrow bazaar lanes versus wide riverfront buffers.
+- **Mode**: Live (`--live`): observed data
+- **Satellite fields**: `landsat-c2-l2 + sentinel-2-l2a + cop-dem-glo-30` (cloud-masked median composites, Mar-May 2024).
+- **Known limitation**: Meta HRSL age layers apply one district-level census share, so `vuln_population_ratio` has no within-city variation in live mode.
 
 ---
 
@@ -41,11 +40,6 @@ The following features are modeled proxies clearly designated to comply with tra
 
 - **Resolution Uniformity**: All fishnet cells are strictly regular 100m x 100m polygons constructed in metric UTM Zone 43N before re-projection to WGS84.
 - **Topological Integrity**: Zero overlapping geometries; adjacent cells share clean contiguous boundaries.
-- **Value Bounds Validation**:
-  - Normalized Difference Indices (NDVI, NDBI, NDWI) in range [-1.0, +1.0].
-  - Sky View Factor in range [0.20, 0.98].
-  - Surface Temperature (LST) in range [25.0 C, 50.0 C] reflecting peak summer conditions in Pune.
-  - Impervious Surface Fraction in range [0.08, 0.96].
 
 ---
 *Report auto-generated by Pune Urban Cooling Data Pipeline.*

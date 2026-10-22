@@ -33,6 +33,22 @@ from data.ingestion.satellite import apply_real_satellite
 from data.storage.exporter import DataExporter
 from data.synthetic.generator import PuneSyntheticGridGenerator, recompute_derived
 
+# Report columns and their source in live mode
+REPORT_SOURCES = {
+    "lst_celsius": "Landsat 8/9 C2 L2",
+    "ndvi": "Sentinel-2 L2A",
+    "ndbi": "Sentinel-2 L2A",
+    "albedo": "Sentinel-2 L2A",
+    "tree_canopy_pct": "Sentinel-2 L2A (NDVI > 0.4)",
+    "impervious_pct": "Sentinel-2 L2A (NDBI > 0, NDVI < 0.2)",
+    "elevation_m": "Copernicus GLO-30",
+    "population": "Meta HRSL",
+    "pop_density_sqkm": "Meta HRSL",
+    "vuln_population_ratio": "Meta HRSL (district-level share)",
+    "dist_cooling_facility_m": "OpenStreetMap",
+    "heat_vulnerability_index": "Derived",
+}
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("pune_data_pipeline")
 
@@ -193,6 +209,7 @@ class PuneDataPipeline:
         self,
         grid_gdf: Optional[gpd.GeoDataFrame] = None,
         live: bool = False,
+        force_recompute: bool = False,
     ) -> Dict[str, Any]:
         """
         Construct a pedestrian walking network graph across Central Pune.
@@ -202,9 +219,17 @@ class PuneDataPipeline:
         - heat risk index (ambient LST normalized)
         - thermal exposure cost
 
+        Like the grid, an existing network file is reused unless force_recompute is set,
+        so the network always matches the grid it was built from.
+
         Returns:
             Network dictionary serialized for fast JSON routing.
         """
+        if self.street_output_path.exists() and not force_recompute:
+            logger.info("Loading existing pedestrian network: %s", self.street_output_path)
+            with open(self.street_output_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+
         if grid_gdf is None:
             grid_gdf = self.generate_and_save_grid()
 
@@ -376,30 +401,10 @@ class PuneDataPipeline:
         total_geom_valid = int(gdf.geometry.is_valid.sum())
         crs_str = str(gdf.crs)
 
-        # Numerical columns to profile
-        numeric_cols = [
-            "mean_lst",
-            "mean_ndvi",
-            "mean_ndbi",
-            "mean_ndwi",
-            "building_density",
-            "mean_building_height",
-            "sky_view_factor",
-            "road_density_m",
-            "impervious_fraction",
-            "tree_canopy_pct",
-            "dist_to_water_m",
-            "dist_to_park_m",
-            "elevation_m",
-            "population",
-            "pct_children",
-            "pct_elderly",
-            "low_income_proxy",
-            "heat_vulnerability_index",
-        ]
-
-        # Filter only existing columns
-        cols = [c for c in numeric_cols if c in gdf.columns]
+        is_live = (
+            "satellite_source" in gdf.columns and gdf["satellite_source"].iloc[0] != "synthetic"
+        )
+        cols = [c for c in REPORT_SOURCES if c in gdf.columns]
 
         rows_md = []
         for col in cols:
@@ -415,15 +420,11 @@ class PuneDataPipeline:
             val_mean = float(series.mean())
             val_std = float(series.std())
 
-            # Identify if proxy
-            is_proxy = (
-                "✓ Yes"
-                if col in ["pct_children", "pct_elderly", "low_income_proxy", "sky_view_factor"]
-                else "No"
+            source = (
+                REPORT_SOURCES[col] if is_live or col == "heat_vulnerability_index" else "Synthetic"
             )
-
             rows_md.append(
-                f"| `{col}` | {val_min:.2f} | {val_q25:.2f} | {val_median:.2f} | {val_q75:.2f} | {val_max:.2f} | {val_iqr:.2f} | {val_mean:.2f} ± {val_std:.2f} | {missing_pct:.1f}% | {is_proxy} |"
+                f"| `{col}` | {val_min:.2f} | {val_q25:.2f} | {val_median:.2f} | {val_q75:.2f} | {val_max:.2f} | {val_iqr:.2f} | {val_mean:.2f} ± {val_std:.2f} | {missing_pct:.1f}% | {source} |"
             )
 
         table_content = "\n".join(rows_md)
@@ -443,26 +444,17 @@ class PuneDataPipeline:
 
 ## 1. Feature Distribution & Data Quality Summary
 
-| Feature Name | Min | Q1 (25%) | Median | Q3 (75%) | Max | IQR | Mean ± Std | Missing % | Proxy? |
+| Feature Name | Min | Q1 (25%) | Median | Q3 (75%) | Max | IQR | Mean ± Std | Missing % | Source |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 {table_content}
 
 ---
 
-## 2. Demographic & Physical Proxies Documentation
+## 2. Data Sources
 
-The following features are modeled proxies clearly designated to comply with transparency and ethical AI principles:
-
-1. **`pct_children` (% Population < 5 years)**:
-   - **Rationale**: Census Ward baseline for Pune (~8.5%) adjusted by residential tenement density and informal settlement presence. High concentrations observed in high-density Peth areas.
-2. **`pct_elderly` (% Population > 65 years)**:
-   - **Rationale**: Derived from Pune central tenure patterns (~7.8% baseline) where older traditional neighborhoods (Sadashiv, Narayan, Shaniwar Peths) exhibit higher elderly permanence compared to newly developed transit nodes.
-3. **`low_income_proxy` (Index 0.0 - 1.0)**:
-   - **Rationale**: Synthesized using micro-morphological indicators: percentage of building footprints < 40m², high built density (>0.60), and lack of formal tree canopy cover.
-4. **`sky_view_factor` (Canyon SVF 0.0 - 1.0)**:
-   - **Rationale**: Geometric canyon proxy computed via building density and mean building height:
-     `SVF = 1.0 - 0.70 * density * min(1.0, height / 25.0)`
-     Captures severe urban canyon radiation trapping in narrow bazaar lanes versus wide riverfront buffers.
+- **Mode**: {"Live (`--live`): observed data" if is_live else "Offline: deterministic synthetic generator"}
+- **Satellite fields**: `{gdf["satellite_source"].iloc[0] if "satellite_source" in gdf.columns else "synthetic"}` (cloud-masked median composites, Mar-May 2024).
+- **Known limitation**: Meta HRSL age layers apply one district-level census share, so `vuln_population_ratio` has no within-city variation in live mode.
 
 ---
 
@@ -470,11 +462,6 @@ The following features are modeled proxies clearly designated to comply with tra
 
 - **Resolution Uniformity**: All fishnet cells are strictly regular 100m x 100m polygons constructed in metric UTM Zone 43N before re-projection to WGS84.
 - **Topological Integrity**: Zero overlapping geometries; adjacent cells share clean contiguous boundaries.
-- **Value Bounds Validation**:
-  - Normalized Difference Indices (NDVI, NDBI, NDWI) in range [-1.0, +1.0].
-  - Sky View Factor in range [0.20, 0.98].
-  - Surface Temperature (LST) in range [25.0 C, 50.0 C] reflecting peak summer conditions in Pune.
-  - Impervious Surface Fraction in range [0.08, 0.96].
 
 ---
 *Report auto-generated by Pune Urban Cooling Data Pipeline.*
@@ -520,7 +507,9 @@ def main() -> None:
 
     pipeline = PuneDataPipeline()
     gdf = pipeline.generate_and_save_grid(force_recompute=args.force, synthetic=args.synthetic)
-    pipeline.generate_pedestrian_network(grid_gdf=gdf, live=not args.synthetic)
+    pipeline.generate_pedestrian_network(
+        grid_gdf=gdf, live=not args.synthetic, force_recompute=args.force
+    )
 
     if args.report:
         pipeline.generate_data_quality_report(gdf=gdf)
