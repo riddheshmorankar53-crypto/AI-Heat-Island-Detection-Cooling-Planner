@@ -3,6 +3,15 @@
 
 An end-to-end urban climate resilience system that detects urban heat island (UHI) hotspots, identifies vulnerable communities, recommends cooling interventions (trees, cool roofs, misting/water points, shaded transit shelters, and community cooling centers) under municipal budget constraints, and provides citizens with heat-safe pedestrian walking routes.
 
+
+### Screenshots
+
+| Cooling planner (Landsat LST, optimizer plan) | Heat hazard alerts (forecast-aware) |
+| :---: | :---: |
+| ![Cooling planner](docs/screenshots/desktop-planner.png) | ![Heat alerts](docs/screenshots/desktop-alerts.png) |
+| **Heat-safe walking route on real OSM streets** | **On a phone** |
+| ![Heat-safe route](docs/screenshots/desktop-routes.png) | ![Phone](docs/screenshots/phone-planner.png) ![Phone alert](docs/screenshots/phone-alert.png) |
+
 ---
 
 ## 🏗️ System Architecture
