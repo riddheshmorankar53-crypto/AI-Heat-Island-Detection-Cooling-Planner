@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 import yaml
 from fastapi import APIRouter, Query
 
+from backend.app import forecast
 from backend.app.config import settings
 from backend.app.database import spatial_db
 from backend.app.schemas.grid import AOIResponse, HotspotsSummaryResponse
@@ -42,8 +43,14 @@ def get_hotspots_summary() -> HotspotsSummaryResponse:
 def get_heat_alerts(
     limit: int = Query(20, ge=1, le=500, description="Max alerts returned (highest risk first)"),
 ) -> Dict[str, Any]:
-    """Heat hazard alerts for critical hotspots, ranked by heat vulnerability."""
-    return spatial_db.get_alerts(limit=limit)
+    """Heat hazard alerts for critical hotspots, escalated when a heatwave is forecast."""
+    fc = forecast.fetch_forecast()
+    escalation = forecast.escalation_for(fc)
+    return {
+        **spatial_db.get_alerts(limit=limit, escalation=escalation),
+        "forecast": fc,
+        "escalation_levels": escalation,
+    }
 
 
 @router.get("/aoi", response_model=AOIResponse)

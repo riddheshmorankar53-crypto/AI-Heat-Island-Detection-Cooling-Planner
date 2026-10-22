@@ -3,9 +3,9 @@
     "city": "Pune, India",
     "seed": 42,
     "total_cells": 3904,
-    "train_samples": 2732,
-    "val_samples": 586,
-    "test_samples": 586,
+    "train_samples": 2709,
+    "val_samples": 585,
+    "test_samples": 610,
     "features_used": [
       "ndbi",
       "ndvi",
@@ -20,63 +20,63 @@
   },
   "models": {
     "baseline_ridge_lst": {
-      "rmse": 0.6097,
-      "mae": 0.4789,
-      "r2": 0.9312
+      "rmse": 1.1037,
+      "mae": 0.8906,
+      "r2": 0.6936
     },
     "baseline_logistic_hotspot": {
-      "accuracy": 0.8874,
-      "f1_score": 0.75
+      "accuracy": 0.9115,
+      "f1_score": 0.5263
     },
     "lightgbm_lst_regressor": {
-      "rmse": 0.6165,
-      "mae": 0.4913,
-      "r2": 0.9297,
+      "rmse": 1.0518,
+      "mae": 0.8394,
+      "r2": 0.7217,
       "feature_importances": {
-        "ndbi": 0.0617,
-        "ndvi": 0.0939,
-        "tree_canopy_pct": 0.1153,
-        "impervious_pct": 0.2529,
-        "albedo": 0.0899,
-        "elevation_m": 0.1303,
-        "pop_density_sqkm": 0.0851,
-        "vuln_population_ratio": 0.0739,
-        "dist_cooling_facility_m": 0.097
+        "ndbi": 0.1305,
+        "ndvi": 0.1039,
+        "tree_canopy_pct": 0.0455,
+        "impervious_pct": 0.1045,
+        "albedo": 0.1221,
+        "elevation_m": 0.2115,
+        "pop_density_sqkm": 0.1187,
+        "vuln_population_ratio": 0.0813,
+        "dist_cooling_facility_m": 0.0819
       }
     },
     "lightgbm_hotspot_classifier": {
-      "accuracy": 0.9027,
-      "precision": 0.6691,
-      "recall": 0.8942,
-      "f1_score": 0.7654,
+      "accuracy": 0.9623,
+      "precision": 0.65,
+      "recall": 0.7429,
+      "f1_score": 0.6933,
       "confusion_matrix": [
         [
-          436,
-          46
+          561,
+          14
         ],
         [
-          11,
-          93
+          9,
+          26
         ]
       ],
       "feature_importances": {
-        "ndbi": 0.0915,
-        "ndvi": 0.163,
-        "tree_canopy_pct": 0.1158,
-        "impervious_pct": 0.2154,
-        "albedo": 0.0823,
-        "elevation_m": 0.0778,
-        "pop_density_sqkm": 0.0734,
-        "vuln_population_ratio": 0.0873,
-        "dist_cooling_facility_m": 0.0936
+        "ndbi": 0.1678,
+        "ndvi": 0.1029,
+        "tree_canopy_pct": 0.0411,
+        "impervious_pct": 0.1056,
+        "albedo": 0.1294,
+        "elevation_m": 0.1217,
+        "pop_density_sqkm": 0.1163,
+        "vuln_population_ratio": 0.1021,
+        "dist_cooling_facility_m": 0.1131
       }
     },
     "spatial_microclimate_gnn": {
-      "rmse": 0.8755,
-      "mae": 0.6889,
-      "r2": 0.8581,
-      "train_rmse": 0.903,
-      "val_rmse": 0.9015
+      "rmse": 1.0005,
+      "mae": 0.779,
+      "r2": 0.7482,
+      "train_rmse": 1.0893,
+      "val_rmse": 1.105
     }
   }
 }

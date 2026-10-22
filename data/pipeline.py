@@ -24,8 +24,9 @@ import pandas as pd
 import yaml
 from shapely.geometry import Point
 
-from data.processing.grid_builder import FishnetGridBuilder
+from data.ingestion.satellite import apply_real_satellite
 from data.storage.exporter import DataExporter
+from data.synthetic.generator import PuneSyntheticGridGenerator
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("pune_data_pipeline")
@@ -142,15 +143,32 @@ class PuneDataPipeline:
         crs_proj = self.city_config.get("crs", {}).get("projected", "EPSG:32643")
         seed = int(self.config.get("project", {}).get("seed", 42))
 
-        builder = FishnetGridBuilder(
-            bbox=bbox,
+        # The canonical grid schema (what ml/ and backend/ consume) comes from the
+        # synthetic generator; --live then overwrites satellite-derivable columns.
+        generator = PuneSyntheticGridGenerator(
+            bbox={
+                "min_lat": bbox["min_latitude"],
+                "min_lon": bbox["min_longitude"],
+                "max_lat": bbox["max_latitude"],
+                "max_lon": bbox["max_longitude"],
+            },
             resolution_meters=grid_resolution,
             crs_geo=crs_geo,
             crs_proj=crs_proj,
             seed=seed,
         )
-
-        gdf = builder.compute_features(synthetic=synthetic)
+        gdf = generator.generate()
+        gdf["satellite_source"] = "synthetic"
+        if not synthetic:
+            gdf = apply_real_satellite(
+                gdf,
+                [
+                    bbox["min_longitude"],
+                    bbox["min_latitude"],
+                    bbox["max_longitude"],
+                    bbox["max_latitude"],
+                ],
+            )
 
         # Export to GeoParquet, GeoJSON, and attempt PostGIS
         export_results = self.exporter.export_all(

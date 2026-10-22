@@ -2,6 +2,7 @@
 
 from fastapi.testclient import TestClient
 
+from backend.app import forecast
 from backend.app.main import app
 
 client = TestClient(app)
@@ -46,8 +47,9 @@ def test_get_grid_filtered():
     assert len(data["features"]) == 10
 
 
-def test_heat_alerts():
+def test_heat_alerts(monkeypatch):
     """Verify alerts are hotspot cells, ranked by HVI, with consistent counts."""
+    monkeypatch.setattr(forecast, "fetch_forecast", lambda: None)  # no network in tests
     response = client.get("/api/v1/alerts?limit=5")
     assert response.status_code == 200
     data = response.json()
@@ -59,6 +61,27 @@ def test_heat_alerts():
     hvis = [a["heat_vulnerability_index"] for a in alerts]
     assert hvis == sorted(hvis, reverse=True)
     assert all(a["severity"] in ("extreme", "high", "moderate") and a["actions"] for a in alerts)
+
+
+def test_heatwave_forecast_escalates_alerts(monkeypatch):
+    """A forecast heatwave raises every alert's severity; a severe one makes all extreme."""
+
+    def fake(tmax):
+        return {"source": "test", "days": [{"date": "2026-05-01", "tmax_celsius": tmax}]}
+
+    def counts_for(tmax):
+        monkeypatch.setattr(forecast, "fetch_forecast", lambda: fake(tmax))
+        data = client.get("/api/v1/alerts").json()
+        return data["counts"], data["escalation_levels"]
+
+    calm, esc0 = counts_for(35.0)
+    heatwave, esc1 = counts_for(41.0)
+    severe, esc2 = counts_for(46.0)
+    assert (esc0, esc1, esc2) == (0, 1, 2)
+    assert calm["extreme"] > 0 and calm["high"] > 0 and calm["moderate"] > 0
+    assert heatwave["moderate"] == 0
+    assert heatwave["extreme"] == calm["extreme"] + calm["high"]
+    assert severe["extreme"] == sum(calm.values())
 
 
 def test_interventions_catalog():

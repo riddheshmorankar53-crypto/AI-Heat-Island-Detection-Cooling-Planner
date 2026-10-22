@@ -3,7 +3,7 @@
 import pytest
 
 from data.pipeline import PuneDataPipeline
-from ml.features.builder import FEATURE_COLUMNS, SpatialFeaturePipeline
+from ml.features.builder import FEATURE_COLUMNS, SpatialFeaturePipeline, spatial_block_ids
 
 
 @pytest.fixture(scope="module")
@@ -36,6 +36,15 @@ def test_train_val_test_split_integrity(grid_gdf):
     assert train_indices.isdisjoint(test_indices)
     assert val_indices.isdisjoint(test_indices)
     assert len(train_indices) + len(val_indices) + len(test_indices) == len(grid_gdf)
+
+    # Spatial blocks must not straddle partitions (no neighbour leakage)
+    blocks = spatial_block_ids(grid_gdf)
+    train_b, val_b, test_b = (
+        set(blocks[list(X_train.index)]),
+        set(blocks[list(X_val.index)]),
+        set(blocks[list(X_test.index)]),
+    )
+    assert train_b.isdisjoint(test_b) and train_b.isdisjoint(val_b) and val_b.isdisjoint(test_b)
 
     # Check scaling behavior
     X_train_scaled = pipeline.fit_transform(X_train)

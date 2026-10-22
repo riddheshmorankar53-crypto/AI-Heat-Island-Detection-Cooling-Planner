@@ -42,3 +42,4 @@ Thumbs.db
 # Tool caches
 .ruff_cache/
 graphify-out/
+data/processed/*.parquet

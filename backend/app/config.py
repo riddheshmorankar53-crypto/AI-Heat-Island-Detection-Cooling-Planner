@@ -23,10 +23,6 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     cors_origins: List[str] = ["http://localhost:5173", "http://127.0.0.1:5173", "*"]
 
-    # Database
-    use_postgis: bool = False
-    database_url: str = "postgresql://postgres:postgres@localhost:5432/pune_cooling_planner"
-
     # Data paths
     grid_geojson_path: str = str(BASE_DIR / "data" / "processed" / "pune_100m_grid.geojson")
     street_network_path: str = str(BASE_DIR / "data" / "processed" / "pune_pedestrian_network.json")

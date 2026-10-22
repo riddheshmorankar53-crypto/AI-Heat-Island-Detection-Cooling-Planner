@@ -13,7 +13,8 @@ import geopandas as gpd
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from pyproj import Transformer
+from sklearn.model_selection import GroupShuffleSplit
 from sklearn.preprocessing import StandardScaler
 
 FEATURE_COLUMNS: List[str] = [
@@ -30,6 +31,15 @@ FEATURE_COLUMNS: List[str] = [
 
 TARGET_REGRESSION: str = "lst_celsius"
 TARGET_CLASSIFICATION: str = "is_critical_hotspot"
+SPATIAL_BLOCK_M: float = 500.0
+
+
+def spatial_block_ids(df: pd.DataFrame, block_m: float = SPATIAL_BLOCK_M) -> np.ndarray:
+    """Assign each cell to a square block (UTM 43N metres) from its centroid."""
+    to_utm = Transformer.from_crs("EPSG:4326", "EPSG:32643", always_xy=True)
+    x, y = to_utm.transform(df["centroid_lon"].to_numpy(), df["centroid_lat"].to_numpy())
+    bx, by = np.floor(x / block_m).astype(int), np.floor(y / block_m).astype(int)
+    return bx * 100_000 + by
 
 
 class SpatialFeaturePipeline:
@@ -85,22 +95,32 @@ class SpatialFeaturePipeline:
         y_reg = df[TARGET_REGRESSION]
         y_cls = df[TARGET_CLASSIFICATION].astype(int)
 
-        # First split: train + val vs test
-        X_train_val, X_test, y_reg_train_val, y_reg_test, y_cls_train_val, y_cls_test = (
-            train_test_split(
-                X, y_reg, y_cls, test_size=test_size, random_state=self.seed, stratify=y_cls
+        # Spatial block split: whole 500m blocks go to one partition, so neighbouring
+        # (spatially autocorrelated) cells never straddle train and test.
+        groups = spatial_block_ids(df)
+        val_ratio_adjusted = val_size / (1.0 - test_size)
+        trainval_idx, test_idx = next(
+            GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=self.seed).split(
+                X, groups=groups
             )
         )
+        train_pos, val_pos = next(
+            GroupShuffleSplit(
+                n_splits=1, test_size=val_ratio_adjusted, random_state=self.seed
+            ).split(trainval_idx, groups=groups[trainval_idx])
+        )
+        train_idx, val_idx = trainval_idx[train_pos], trainval_idx[val_pos]
 
-        # Second split: train vs val
-        val_ratio_adjusted = val_size / (1.0 - test_size)
-        X_train, X_val, y_reg_train, y_reg_val, y_cls_train, y_cls_val = train_test_split(
-            X_train_val,
-            y_reg_train_val,
-            y_cls_train_val,
-            test_size=val_ratio_adjusted,
-            random_state=self.seed,
-            stratify=y_cls_train_val,
+        X_train, X_val, X_test = X.iloc[train_idx], X.iloc[val_idx], X.iloc[test_idx]
+        y_reg_train, y_reg_val, y_reg_test = (
+            y_reg.iloc[train_idx],
+            y_reg.iloc[val_idx],
+            y_reg.iloc[test_idx],
+        )
+        y_cls_train, y_cls_val, y_cls_test = (
+            y_cls.iloc[train_idx],
+            y_cls.iloc[val_idx],
+            y_cls.iloc[test_idx],
         )
 
         return (
