@@ -12,7 +12,7 @@ export default function LayerControl({
   onChangeOpacity,
 }) {
   const layerOptions = [
-    { id: 'lst', label: 'Land Surface Temp (LST)', icon: Flame, color: '#f43f5e', desc: 'Summer Peak (29°C - 44°C)' },
+    { id: 'lst', label: 'Land Surface Temp (LST)', icon: Flame, color: '#f43f5e', desc: 'Landsat, Mar-May 2024' },
     { id: 'ndvi', label: 'Vegetation Index (NDVI)', icon: Trees, color: '#10b981', desc: 'Tree Canopy & Greenery' },
     { id: 'hvi', label: 'Heat Vulnerability (HVI)', icon: AlertTriangle, color: '#f59e0b', desc: 'Demographics + Heat Stress' },
     { id: 'hotspots', label: 'Critical Hotspots (Top 15%)', icon: ShieldAlert, color: '#ef4444', desc: 'High Temp + High Risk Core' },

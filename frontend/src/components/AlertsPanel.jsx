@@ -7,7 +7,7 @@ const SEVERITY = {
   moderate: { label: 'Moderate', badge: 'badge-blue', color: '#3b82f6' },
 };
 
-export default function AlertsPanel({ alertsData }) {
+export default function AlertsPanel({ alertsData, selectedAlert, onSelectAlert }) {
   if (!alertsData) {
     return (
       <div className="glass-panel" style={{ padding: '16px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
@@ -44,16 +44,41 @@ export default function AlertsPanel({ alertsData }) {
         ))}
       </div>
 
+      {alertsData.forecast ? (
+        <div className="glass-card" style={{
+          padding: '8px 10px',
+          fontSize: '0.74rem',
+          borderLeft: `3px solid ${alertsData.escalation_levels > 0 ? '#f43f5e' : '#10b981'}`,
+        }}>
+          <div style={{ fontWeight: 600, marginBottom: '4px' }}>
+            {alertsData.escalation_levels > 0
+              ? `Heatwave forecast: severity raised ${alertsData.escalation_levels} level(s)`
+              : 'No heatwave forecast (all days below 40°C)'}
+          </div>
+          <div style={{ display: 'flex', gap: '10px', color: 'var(--text-secondary)' }}>
+            {alertsData.forecast.days.map((d) => (
+              <span key={d.date}>{d.date.slice(5)}: <strong>{d.tmax_celsius}°C</strong></span>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+          Weather forecast unavailable; severity from satellite data only.
+        </p>
+      )}
+
       <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-        Top {alertsData.alerts.length} cells by Heat Vulnerability Index
+        Top {alertsData.alerts.length} cells by Heat Vulnerability Index. Click to locate on map.
       </p>
 
       {alertsData.alerts.map((a) => {
         const s = SEVERITY[a.severity];
         return (
-          <div key={a.cell_id} className="glass-card" style={{
+          <div key={a.cell_id} className="glass-card" onClick={() => onSelectAlert(a)} style={{
             padding: '10px 12px',
             borderLeft: `3px solid ${s.color}`,
+            cursor: 'pointer',
+            outline: selectedAlert?.cell_id === a.cell_id ? `1px solid ${s.color}` : 'none',
             display: 'flex',
             flexDirection: 'column',
             gap: '6px',

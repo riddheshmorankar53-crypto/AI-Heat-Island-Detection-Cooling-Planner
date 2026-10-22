@@ -19,10 +19,10 @@ Returns service health and spatial database connection status.
   "environment": "development",
   "pilot_city": "Pune, India",
   "database": {
-    "mode": "Local_GeoPandas_Fallback",
-    "is_postgis_active": false,
+    "mode": "GeoPandas (in-memory)",
     "total_cells_cached": 3904,
-    "crs": "EPSG:4326"
+    "crs": "EPSG:4326",
+    "satellite_source": "landsat-c2-l2 + sentinel-2-l2a + cop-dem-glo-30"
   }
 }
 ```
@@ -65,7 +65,9 @@ Aggregated statistics on urban heat island intensity and vulnerable population a
 
 ### `GET /alerts`
 Heat hazard alerts for every critical hotspot cell, ranked by Heat Vulnerability Index.
-Severity: `extreme` (HVI ≥ 0.75), `high` (HVI ≥ 0.70), else `moderate`. Cells more than 800 m from a cooling refuge get a "deploy temporary shelter" action.
+Base severity is ranked within hotspots: top 10% HVI `extreme`, next 40% `high`, the rest `moderate`.
+A 3-day Open-Meteo forecast for Pune then escalates every alert by `escalation_levels`: +1 if any day's max reaches 40°C, +2 at 45°C (capped at `extreme`). `forecast` is `null` when Open-Meteo is unreachable, and severity falls back to the base tiers.
+Cells more than 800 m from a cooling refuge get a "deploy temporary shelter" action.
 
 **Query Parameters**:
 - `limit` (int, default 20, 1–500): Number of alerts returned (highest risk first). `total_alerts` and `counts` always cover all hotspots.
@@ -73,20 +75,25 @@ Severity: `extreme` (HVI ≥ 0.75), `high` (HVI ≥ 0.70), else `moderate`. Cell
 **Response `200 OK`**:
 ```json
 {
-  "total_alerts": 694,
-  "counts": { "extreme": 82, "high": 291, "moderate": 321 },
+  "total_alerts": 271,
+  "counts": { "extreme": 28, "high": 108, "moderate": 135 },
   "alerts": [
     {
-      "cell_id": "PUNE_100M_01234",
+      "cell_id": "PUNE_100M_01482",
       "severity": "extreme",
-      "lon": 73.8553, "lat": 18.5196,
-      "lst_celsius": 42.8, "lst_anomaly_celsius": 4.1,
-      "heat_vulnerability_index": 0.87,
-      "population": 140,
-      "dist_cooling_facility_m": 1210.0,
+      "lon": 73.8481, "lat": 18.5069,
+      "lst_celsius": 47.34, "lst_anomaly_celsius": 6.15,
+      "heat_vulnerability_index": 0.75,
+      "population": 286,
+      "dist_cooling_facility_m": 2293.0,
       "actions": ["Open water/misting points during 12:00-16:00", "..."]
     }
-  ]
+  ],
+  "forecast": {
+    "source": "open-meteo",
+    "days": [{ "date": "2026-10-22", "tmax_celsius": 33.5 }, "..."]
+  },
+  "escalation_levels": 0
 }
 ```
 

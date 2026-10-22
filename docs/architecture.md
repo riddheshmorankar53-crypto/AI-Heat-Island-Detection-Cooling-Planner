@@ -9,7 +9,7 @@ flowchart TD
     subgraph DataLayer["Data & GIS Ingestion Layer"]
         A[Pune Pilot AOI Config\nEPSG:4326 / EPSG:32643] --> B[100m Regular Grid Generator]
         B --> C[Spatial Feature Engine\nNDVI, NDBI, Canopy, Impervious, Elevation, Population]
-        C --> D[(Processed GeoJSON & PostGIS Cache)]
+        C --> D[(Processed GeoJSON, in-memory GeoPandas)]
     end
 
     subgraph MLLayer["Machine Learning & Optimization Layer"]
@@ -46,14 +46,15 @@ flowchart TD
 ### 1. Data Ingestion & 100m Metric Grid (`/data`)
 - **Spatial Resolution**: 100m $\times$ 100m cells ($0.01\text{ km}^2$), projected via UTM Zone 43N (EPSG:32643) for meter-accurate distance computation and reprojected to EPSG:4326 for Leaflet compatibility.
 - **Physical Grounding**: Grounded in Pune's topography (Mutha River cooling corridor, Shivajinagar/Pune Station rail transit hubs, Budhwar/Nana Peth dense historical cores, and Vetal Tekdi/Fergusson green hills).
-- **Synthetic Fallback**: When real-time satellite imagery is unavailable, a deterministic synthetic generator provides physically consistent features explicitly tagged with `is_synthetic: true`.
+- **Real Satellite Data** (`--live`): `data/ingestion/satellite.py` reads only the AOI window of Planetary Computer COGs (Landsat 8/9 LST, Sentinel-2 L2A, Copernicus DEM), cloud-masks each scene, takes a per-pixel median over up to 6 scenes, warps to a 10m grid aligned to the fishnet, and averages each 10×10 block into its 100m cell.
+- **Synthetic Fallback**: Offline, a deterministic generator provides the same schema. Demographics are always synthetic and the grid stays tagged `is_synthetic: true`; `satellite_source` says where the satellite fields came from.
 
-### 2. Dual Database Architecture (`/backend/app/database.py`)
-- Automatically detects if PostgreSQL + PostGIS is accessible.
-- If unavailable, seamlessly falls back to an in-memory, file-backed GeoPandas spatial indexing engine, ensuring 100% offline laptop execution with zero Docker dependencies required.
+### 2. Data Store (`/backend/app/database.py`)
+- The processed grid GeoJSON is loaded once into an in-memory GeoPandas frame; no database server is needed. (The data pipeline can still export the grid to PostGIS.)
 
 ### 3. Machine Learning & Spatial Graph ML (`/ml`)
 - **Strict Pipeline Ordering**: Featurization pipelines are fitted exclusively on training splits (70%) and applied to validation (15%) and test (15%) splits to eliminate data leakage.
+- **Spatial Block Split**: Partitions are whole 500m blocks, so neighbouring (spatially autocorrelated) cells never straddle train and test.
 - **Model Hierarchy**:
   - Baseline: Ridge Linear Regression.
   - Tree Ensemble: LightGBM regressor predicting Land Surface Temperature (LST) and LightGBM classifier detecting Critical Hotspots.

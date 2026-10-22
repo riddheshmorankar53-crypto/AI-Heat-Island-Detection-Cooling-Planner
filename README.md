@@ -11,7 +11,7 @@ An end-to-end urban climate resilience system that detects urban heat island (UH
 flowchart LR
     A["Data Sources<br/>(Landsat-8, Sentinel-2,<br/>OSM, Census, DEM)"] --> B["Ingestion<br/>(STAC APIs,<br/>OSMnx, Rasterio)"]
     B --> C["Preprocessing<br/>(100m Metric Grid,<br/>NDVI, NDBI, Canopy, HVI)"]
-    C --> D[("PostGIS<br/>Spatial Database<br/>& Local Cache")]
+    C --> D[("Processed Grid<br/>(GeoJSON, in-memory<br/>GeoPandas)")]
     D --> E["AI Engine"]
     
     subgraph E["AI Engine"]
@@ -26,7 +26,7 @@ flowchart LR
     subgraph F["Application Layer"]
         F1["Interactive Dashboard<br/>(React + Leaflet)"]
         F2["Scenario Simulator<br/>(Budget & Interventions)"]
-        F3["Alerts & Early Warnings<br/>(Hotspot Hazards)"]
+        F3["Alerts & Early Warnings<br/>(Hotspots + Open-Meteo)"]
     end
     
     F --> G["Users<br/>(City Planners, Officers,<br/>Vulnerable Citizens)"]
@@ -39,13 +39,18 @@ flowchart LR
 1. **100m Metric Grid Spatial Engine (`/data`)**:
    - High-resolution $100\text{m} \times 100\text{m}$ grid ($0.01\text{ km}^2$ per cell, 3,904 cells) over Central Pune (Shivajinagar, Shaniwar Wada, Budhwar Peth, Swargate, Mutha River corridor).
    - Features: Land Surface Temperature (LST), NDVI, NDBI, tree canopy %, impervious surface %, albedo, elevation, population density, vulnerable demographics ratio, and Heat Vulnerability Index (HVI).
-   - Physically grounded synthetic fallback explicitly labelled with `is_synthetic: true`.
+   - **Real satellite data** (`python data/pipeline.py --live --force`): cloud-masked median composites from Microsoft Planetary Computer for Mar–May 2024 (pre-monsoon peak):
+     - LST from the Landsat 8/9 Collection 2 Level-2 thermal band (6 scenes).
+     - NDVI, NDBI, broadband albedo, tree canopy % and impervious % from Sentinel-2 L2A at 10m, averaged per 100m cell (6 scenes).
+     - Elevation from the Copernicus GLO-30 DEM.
+   - **Still synthetic**: population density, vulnerable-population ratio and distance to cooling facilities (no open ward-level census for 2024). The `satellite_source` column records where the satellite fields came from; `is_synthetic: true` stays because the demographics are synthetic.
+   - Offline mode (the default) generates a fully synthetic grid with the same schema.
 
 2. **AI Heat Island & Vulnerability Prediction (`/ml`)**:
-   - **Baseline**: Ridge Linear Regression ($R^2 = 0.931$).
-   - **Gradient Boosted Tree (LightGBM)**: LST Regressor ($R^2 = 0.930$, $\text{RMSE} = 0.617^\circ\text{C}$) and Critical Hotspot Classifier ($\text{Accuracy} = 90.3\%$, $\text{Recall} = 89.4\%$).
-   - **Graph Neural Network (PyTorch Spatial GCN)**: 2-layer Spatial Graph Convolution modeling microclimate thermal diffusion across contiguous 100m cells ($R^2 = 0.858$, $\text{RMSE} = 0.875^\circ\text{C}$).
-   - **Grounded Verification**: Fixed seed (`42`), train/val/test splits strictly before featurization, and genuine evaluation metrics saved to `ml/artifacts/metrics.json`.
+   - **Baseline**: Ridge Linear Regression ($R^2 = 0.694$).
+   - **Gradient Boosted Tree (LightGBM)**: LST Regressor ($R^2 = 0.722$, $\text{RMSE} = 1.05^\circ\text{C}$) and Critical Hotspot Classifier ($F_1 = 0.693$, $\text{Recall} = 74.3\%$).
+   - **Graph Neural Network (PyTorch Spatial GCN)**: 2-layer Spatial Graph Convolution over contiguous 100m cells. It is the best LST model ($R^2 = 0.748$, $\text{RMSE} = 1.00^\circ\text{C}$) because neighbouring cells carry real thermal context.
+   - **Honest evaluation**: Fixed seed (`42`); train/val/test split by **500m spatial blocks**, so neighbouring (spatially autocorrelated) cells never straddle train and test; scaler fitted on train only; metrics saved to `ml/artifacts/metrics.json`.
 
 3. **Google OR-Tools Cooling Intervention Optimizer (`/ml/optimizer`)**:
    - Solves a Mixed-Integer Linear Program (MILP) using SCIP/CBC.
@@ -60,25 +65,27 @@ flowchart LR
 
 5. **Interactive Full-Stack GIS Dashboard (`/frontend` + `/backend`)**:
    - **Frontend**: React + Vite + Leaflet with dynamic choropleths (LST, NDVI, HVI, Hotspots), intervention influence radius buffers, route comparison lines, budget sliders, and a Model Transparency Modal.
-   - **Backend**: FastAPI REST service with dual-adapter spatial database (PostGIS with seamless auto-fallback to local GeoPandas engine).
+   - **Backend**: FastAPI REST service serving the grid from an in-memory GeoPandas frame (no database needed; the data pipeline can optionally export to PostGIS).
 
 6. **Heat Hazard Alerts (`GET /api/v1/alerts`)**:
-   - Every critical hotspot ranked by Heat Vulnerability Index into `extreme` / `high` / `moderate` alerts.
-   - Each alert carries concrete actions (misting hours, temporary shelter where no cooling refuge is within 800m, door-to-door checks where vulnerable residents are concentrated).
-   - Alerts are static, derived from the satellite grid; wiring in a weather forecast would turn them into time-based early warnings.
+   - Every critical hotspot ranked by Heat Vulnerability Index: top 10% `extreme`, next 40% `high`, the rest `moderate`.
+   - **Early warning**: a 3-day Open-Meteo forecast for Pune (free, no key) raises every alert one level when any day reaches 40°C (IMD heatwave threshold) and two levels at 45°C. If the forecast is unreachable, alerts fall back to satellite data only.
+   - Each alert carries concrete actions (misting hours, temporary shelter where no cooling refuge is within 800m, door-to-door checks where vulnerable residents are concentrated). Clicking an alert in the dashboard flies the map to that cell.
 
 ---
 
-## 📊 Live Model Benchmarks (Test Set: N=586, Seed 42)
+## 📊 Model Benchmarks (Real Satellite Data, Spatial Block Split, Test N=610, Seed 42)
 
-> **Strict Transparency Rule**: These figures are real evaluation numbers generated by `ml/train.py` on held-out test data. Zero fabricated metrics.
+> Generated by `ml/train.py` on held-out 500m spatial blocks of the real Landsat/Sentinel-2 grid. Earlier versions of this README reported $R^2 \approx 0.93$; those came from synthetic data whose temperature was a formula of the input features, scored with a random (leaky) split.
 
 | Model Architecture | Task | R² Score / Acc | RMSE / F1 | Top Feature Drivers |
 | :--- | :--- | :--- | :--- | :--- |
-| **Ridge Regression** | LST Continuous | $R^2 = 0.931$ | $0.610^\circ\text{C}$ | Impervious %, Canopy % |
-| **LightGBM Regressor** | LST Continuous | $R^2 = 0.930$ | $0.617^\circ\text{C}$ | Impervious (25.3%), Elevation (13.0%), Canopy (11.5%) |
-| **Spatial GNN (PyTorch)** | Microclimate Diffusion | $R^2 = 0.858$ | $0.875^\circ\text{C}$ | Spatial Neighborhood Adjacency |
-| **LightGBM Classifier** | Hotspot Detection | $\text{Acc} = 90.3\%$ | $F_1 = 0.765$ | Hotspot Recall = 89.4% (93 of 104 caught) |
+| **Ridge Regression** | LST Continuous | $R^2 = 0.694$ | $1.10^\circ\text{C}$ | (linear baseline) |
+| **LightGBM Regressor** | LST Continuous | $R^2 = 0.722$ | $1.05^\circ\text{C}$ | Elevation (21%), NDBI (13%), Albedo (12%), Pop. density (12%) |
+| **Spatial GNN (PyTorch)** | LST with neighbour context | $R^2 = 0.748$ | $1.00^\circ\text{C}$ | Spatial neighbourhood adjacency |
+| **LightGBM Classifier** | Hotspot Detection | $\text{Acc} = 96.2\%$ | $F_1 = 0.693$ | Recall 74.3% (26 of 35 test hotspots caught) |
+
+**Caveat:** population density is synthetic but ranks as a top LST driver, because the synthetic generator makes it densest near the commercial core, which really is hotter. Treat it as a location proxy until real census data replaces it.
 
 ---
 
@@ -97,7 +104,9 @@ pip install -r backend/requirements.txt
 ### Step 2: Generate Grid & Train Models (Reproducible Pipeline)
 ```bash
 # 1. Generate 100m Pune grid and pedestrian network
-python data/pipeline.py
+#    --live --force pulls real Landsat / Sentinel-2 / DEM data (~1-2 min, needs internet).
+#    Without flags it reuses data/processed/, or builds a synthetic grid offline.
+python data/pipeline.py --live --force
 
 # 2. Train baseline, LightGBM, and Spatial GNN models (saves to ml/artifacts/)
 python ml/train.py
@@ -123,30 +132,30 @@ Open `http://localhost:5173` in your browser.
 
 ## 🐳 Docker Compose (Alternative)
 
-To launch the full stack (PostgreSQL+PostGIS, FastAPI backend, and Nginx frontend):
+To launch the full stack (FastAPI backend and Nginx frontend):
 ```bash
 docker compose up --build
 ```
 - Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:8000/docs`
-- PostGIS: `localhost:5432`
 
 ---
 
 ## 🧪 Automated Testing
 
-Run the full pytest suite (30 unit & integration tests):
+Run the full pytest suite (32 unit & integration tests):
 ```bash
 pytest tests/ -v
 ```
 
-All 30 tests cover:
+All 32 tests cover:
 - 100m grid dimensions, valid geometries, and environmental ranges.
-- Feature pipeline train/val/test split integrity (zero data leakage).
+- Feature pipeline spatial-block train/val/test split (no neighbour leakage).
+- Satellite raster-to-cell mapping.
 - ML regression & classification models.
 - Google OR-Tools budget & spatial constraints.
 - Pedestrian heat-safe routing pathfinding.
-- FastAPI REST endpoints (including heat hazard alerts).
+- FastAPI REST endpoints, including heat alerts and forecast escalation.
 
 ---
 
@@ -177,7 +186,8 @@ All 30 tests cover:
 │   ├── app/
 │   │   ├── main.py               # FastAPI entrypoint & CORS
 │   │   ├── config.py             # Pydantic Settings
-│   │   ├── database.py           # PostGIS + GeoPandas fallback data manager
+│   │   ├── database.py           # In-memory GeoPandas grid, summary & alert queries
+│   │   ├── forecast.py           # Open-Meteo 3-day forecast for heatwave escalation
 │   │   ├── schemas/              # Pydantic request/response schemas
 │   │   └── routers/              # Grid, Interventions, Routing, Metrics endpoints
 │   ├── Dockerfile
@@ -204,8 +214,8 @@ All 30 tests cover:
 │   ├── architecture.md           # Mermaid diagrams & system architecture
 │   ├── mathematical_formulation.md# Equations for HVI, MILP solver & routing
 │   └── api_reference.md          # Complete REST API reference
-├── tests/                        # 30 unit and integration tests
-├── docker-compose.yml            # PostgreSQL+PostGIS, backend & frontend
+├── tests/                        # 32 unit and integration tests
+├── docker-compose.yml            # Backend & frontend
 └── .env.example                  # Environment configuration template
 ```
 

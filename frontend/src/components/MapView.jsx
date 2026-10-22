@@ -1,20 +1,23 @@
 import React, { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, GeoJSON, Circle, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, GeoJSON, Circle, CircleMarker, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 
 // Pune Center Coordinates
 const PUNE_CENTER = [18.5175, 73.8550];
 
 // Color mapping functions
+// Bins span the real Landsat pre-monsoon range for central Pune (~34-50°C)
 function getLSTColor(temp) {
-  if (temp >= 41.5) return '#b91c1c'; // deep crimson
-  if (temp >= 39.0) return '#ef4444'; // red
-  if (temp >= 37.0) return '#f97316'; // orange
-  if (temp >= 35.0) return '#eab308'; // amber/yellow
-  if (temp >= 33.0) return '#84cc16'; // lime green
-  if (temp >= 31.0) return '#10b981'; // emerald
+  if (temp >= 45.0) return '#b91c1c'; // deep crimson
+  if (temp >= 43.0) return '#ef4444'; // red
+  if (temp >= 41.5) return '#f97316'; // orange
+  if (temp >= 40.0) return '#eab308'; // amber/yellow
+  if (temp >= 38.5) return '#84cc16'; // lime green
+  if (temp >= 37.0) return '#10b981'; // emerald
   return '#06b6d4'; // cool cyan
 }
+
+const ALERT_COLORS = { extreme: '#f43f5e', high: '#f59e0b', moderate: '#3b82f6' };
 
 function getNDVIColor(ndvi) {
   if (ndvi >= 0.50) return '#065f46'; // deep forest
@@ -70,6 +73,14 @@ function MapUpdater({ aoiCenter }) {
   return null;
 }
 
+function FlyToAlert({ alert }) {
+  const map = useMap();
+  useEffect(() => {
+    if (alert) map.flyTo([alert.lat, alert.lon], 16, { duration: 0.8 });
+  }, [alert, map]);
+  return null;
+}
+
 export default function MapView({
   gridGeoJson,
   activeLayer,
@@ -79,6 +90,8 @@ export default function MapView({
   routeResult,
   showRoute,
   aoiMetadata,
+  alerts,
+  selectedAlert,
 }) {
   const geoJsonRef = useRef(null);
 
@@ -191,14 +204,14 @@ export default function MapView({
               {/* Central Marker */}
               <Marker position={coords} icon={createInterventionIcon(p.color, letter)}>
                 <Popup>
-                  <div style="font-family: 'Inter', sans-serif;">
-                    <div style="font-weight: 700; font-size: 0.9rem; color: ${p.color};">${p.intervention_name}</div>
-                    <div style="font-size: 0.75rem; color: #9ca3af; margin: 3px 0 6px 0;">Cell: ${p.cell_id}</div>
-                    <div style="font-size: 0.78rem; display: flex; flex-direction: column; gap: 3px;">
-                      <div>Cost: <strong>₹${p.cost_inr.toLocaleString('en-IN')}</strong></div>
-                      <div>Cooling Impact: <strong style="color: #34d399;">-${p.cooling_delta_celsius}°C</strong></div>
-                      <div>Influence Radius: <strong>${p.influence_radius_m} meters</strong></div>
-                      <div>Current Cell LST: <strong>${p.current_lst}°C</strong></div>
+                  <div style={{ fontFamily: "'Inter', sans-serif" }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: p.color }}>{p.intervention_name}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#9ca3af', margin: '3px 0 6px 0' }}>Cell: {p.cell_id}</div>
+                    <div style={{ fontSize: '0.78rem', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      <div>Cost: <strong>₹{p.cost_inr.toLocaleString('en-IN')}</strong></div>
+                      <div>Cooling Impact: <strong style={{ color: '#34d399' }}>-{p.cooling_delta_celsius}°C</strong></div>
+                      <div>Influence Radius: <strong>{p.influence_radius_m} meters</strong></div>
+                      <div>Current Cell LST: <strong>{p.current_lst}°C</strong></div>
                     </div>
                   </div>
                 </Popup>
@@ -206,6 +219,31 @@ export default function MapView({
             </React.Fragment>
           );
         })}
+
+        {/* Heat Hazard Alerts Layer */}
+        {alerts?.map((a) => (
+          <CircleMarker
+            key={a.cell_id}
+            center={[a.lat, a.lon]}
+            radius={a.cell_id === selectedAlert?.cell_id ? 11 : 7}
+            pathOptions={{
+              color: '#ffffff',
+              weight: a.cell_id === selectedAlert?.cell_id ? 3 : 1.5,
+              fillColor: ALERT_COLORS[a.severity],
+              fillOpacity: 0.9,
+            }}
+          >
+            <Popup>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.78rem' }}>
+                <strong style={{ color: ALERT_COLORS[a.severity] }}>
+                  {a.severity.toUpperCase()} heat alert
+                </strong>
+                <div>{a.cell_id} · {a.lst_celsius.toFixed(1)}°C · {a.population} people</div>
+              </div>
+            </Popup>
+          </CircleMarker>
+        ))}
+        <FlyToAlert alert={selectedAlert} />
 
         {/* Walking Routes Layer */}
         {showRoute && routeResult && (
@@ -268,8 +306,8 @@ export default function MapView({
       {/* Map Legend Overlay */}
       <div className="glass-panel" style={{
         position: 'absolute',
-        bottom: '20px',
-        left: '20px',
+        bottom: '28px',
+        right: '20px',
         padding: '10px 14px',
         zIndex: 1000,
         fontSize: '0.72rem',
@@ -286,14 +324,14 @@ export default function MapView({
 
         {activeLayer === 'lst' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span style={{ color: 'var(--text-muted)' }}>&le;31°C</span>
+            <span style={{ color: 'var(--text-muted)' }}>&le;37°C</span>
             <div style={{
               width: '120px',
               height: '8px',
               borderRadius: '4px',
               background: 'linear-gradient(90deg, #06b6d4 0%, #10b981 25%, #eab308 50%, #f97316 75%, #b91c1c 100%)',
             }} />
-            <span style={{ color: 'var(--text-muted)' }}>&ge;42°C</span>
+            <span style={{ color: 'var(--text-muted)' }}>&ge;45°C</span>
           </div>
         )}
 

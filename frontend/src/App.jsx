@@ -38,6 +38,7 @@ export default function App() {
   const [routeResult, setRouteResult] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [alertsData, setAlertsData] = useState(null);
+  const [selectedAlert, setSelectedAlert] = useState(null);
   const [isMetricsOpen, setIsMetricsOpen] = useState(false);
 
   // Loading & error states
@@ -262,7 +263,13 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'alerts' && <AlertsPanel alertsData={alertsData} />}
+          {activeTab === 'alerts' && (
+            <AlertsPanel
+              alertsData={alertsData}
+              selectedAlert={selectedAlert}
+              onSelectAlert={setSelectedAlert}
+            />
+          )}
 
           {/* Error Banner if any */}
           {errorMessage && (
@@ -292,6 +299,8 @@ export default function App() {
             routeResult={routeResult}
             showRoute={showRoute}
             aoiMetadata={aoiMetadata}
+            alerts={activeTab === 'alerts' ? alertsData?.alerts : null}
+            selectedAlert={activeTab === 'alerts' ? selectedAlert : null}
           />
         </main>
       </div>
