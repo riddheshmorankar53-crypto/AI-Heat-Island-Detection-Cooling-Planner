@@ -52,14 +52,14 @@ Aggregated statistics on urban heat island intensity and vulnerable population a
 ```json
 {
   "total_cells": 3904,
-  "critical_hotspot_cells": 694,
-  "hotspot_percentage": 17.8,
-  "max_lst_celsius": 43.49,
-  "min_lst_celsius": 29.5,
-  "mean_lst_celsius": 36.52,
-  "total_population": 97600,
-  "vulnerable_population_at_risk": 18888,
-  "avg_heat_vulnerability_index": 0.504
+  "critical_hotspot_cells": 534,
+  "hotspot_percentage": 13.7,
+  "max_lst_celsius": 50.37,
+  "min_lst_celsius": 33.67,
+  "mean_lst_celsius": 41.19,
+  "total_population": 1171850,
+  "vulnerable_population_at_risk": 215207,
+  "avg_heat_vulnerability_index": 0.537
 }
 ```
 

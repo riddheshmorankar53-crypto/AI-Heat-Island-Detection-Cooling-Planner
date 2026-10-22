@@ -9,7 +9,7 @@ and NetworkX covers everything else.
 | 1 | Spatial grid graph | 3,904 cells / cells within ~150 m | Graph Convolutional Network (node regression) | `ml/models/spatial_gnn.py`, `ml/train.py` |
 | 2 | Same grid graph | same | Graph analytics (homophily, assortativity, receptive field) | `ml/graph_demo.py` |
 | 3 | Feature-similarity graph | 3,904 cells / 5 nearest neighbours in feature space | kNN graph + Louvain community detection | `viz/build_graph.py` |
-| 4 | Pedestrian street graph | 22 landmarks / 32 streets | Heat-weighted Dijkstra routing | `ml/routing/heat_safe_router.py` |
+| 4 | Pedestrian street graph | 8,809 intersections / 11,710 OSM streets (`--live`) | Heat-weighted Dijkstra routing | `ml/routing/heat_safe_router.py` |
 
 ---
 
@@ -26,20 +26,22 @@ and NetworkX covers everything else.
 | **Model** | `SpatialMicroclimateGNN`: 9 → 32 hidden → ReLU → dropout → 1 output |
 | **Message passing** | 2 layers, so each prediction draws on cells up to 2 hops away. This models heat spreading between neighbouring blocks. |
 | **Task** | Predict land surface temperature (LST) per cell: node regression, trained on the whole graph at once |
-| **Training setup** | The model sees the full graph; the loss uses only training nodes. Split 70/15/15 (2,732 / 586 / 586). Adam (lr 0.01, weight decay 1e-4), mean squared error loss, targets standardised. |
+| **Training setup** | The model sees the full graph; the loss uses only training nodes. Split 70/15/15 by whole 500 m spatial blocks (2,709 / 585 / 610), so neighbouring cells never straddle train and test. Adam (lr 0.01, weight decay 1e-4), mean squared error loss, targets standardised. |
 | **Output** | `ml/artifacts/spatial_gnn.pt` |
 
 ### Results (test set, from `ml/artifacts/metrics.json`)
 
 | Model | RMSE (°C) | MAE (°C) | R² |
 |---|---|---|---|
-| Ridge regression (baseline) | 0.610 | 0.479 | 0.931 |
-| LightGBM | 0.617 | 0.491 | 0.930 |
-| **Spatial GCN** | **0.876** | **0.689** | **0.858** |
+| Ridge regression (baseline) | 1.117 | 0.892 | 0.686 |
+| LightGBM | 1.062 | 0.851 | 0.716 |
+| **Spatial GCN** | **0.977** | **0.772** | **0.760** |
 
-The GCN currently does worse than the simpler models. The likely reason is that the data is
-synthetic and each cell's temperature can be predicted from its own features, so looking at
-neighbours adds little.
+On the real satellite grid (Landsat / Sentinel-2 / HRSL / OSM) with a spatial block split, the
+GCN is the best model. A cell's temperature depends on its surroundings as well as its own
+features (heat spreads between neighbouring blocks), and message passing captures that. (On the
+earlier synthetic data, where each cell's temperature was a formula of its own features, the
+GCN scored worse than Ridge.)
 
 ### Known issue
 `config/config.yaml` sets `gnn.dropout: 0.15` and `gnn.num_layers: 2`, but `ml/train.py` passes
@@ -82,11 +84,11 @@ Run with `python viz/build_graph.py`.
 
 | Part | How it's done |
 |---|---|
-| **Graph** | Undirected, weighted NetworkX graph: 22 landmark nodes, 32 street edges (synthetic; OSMnx is meant to supply the real network) |
-| **Edge attributes** | `length`, `shade`, `heat`, `ambient_lst` |
+| **Graph** | Undirected, weighted NetworkX graph of the real OpenStreetMap walking network (`--live`: 8,809 nodes, 11,710 edges). Offline mode falls back to 22 synthetic landmark nodes. |
+| **Edge attributes** | `length`, `shade`, `heat`, `ambient_lst`, `geometry`. Shade and heat are sampled every 20 m along each street from the grid cells it crosses. |
 | **Algorithm** | Dijkstra's shortest path (`nx.shortest_path`), run twice: on distance, then on a heat-aware weight |
 | **Heat-aware cost** | length × (1 + γ · heat · (1 − shade)), where γ (`heat_avoidance_weight`, 0–5) sets how strongly the route avoids heat |
-| **Snapping to the map** | Nearest node by equirectangular distance, rejected beyond 1 km (`MAX_SNAP_M`) |
+| **Snapping to the map** | Nearest node by equirectangular distance (vectorised), rejected beyond 1 km (`MAX_SNAP_M`). Named landmarks snap to their nearest street node. |
 | **API** | `POST /api/v1/routing/heat-safe` returns the fastest and heat-safe routes as GeoJSON, plus a comparison |
 
 ---

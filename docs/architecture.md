@@ -14,9 +14,9 @@ flowchart TD
 
     subgraph MLLayer["Machine Learning & Optimization Layer"]
         D --> E[Spatial Feature Pipeline\nSplit Before Scaling]
-        E --> F1[Baseline Ridge Regressor\nR²=0.931]
-        E --> F2[LightGBM Regressor & Classifier\nR²=0.930, Acc=90.3%]
-        E --> F3[PyTorch Spatial GNN\nAdjacency Convolution R²=0.858]
+        E --> F1[Baseline Ridge Regressor\nR²=0.686]
+        E --> F2[LightGBM Regressor & Classifier\nR²=0.716, Recall=84%]
+        E --> F3[PyTorch Spatial GNN\nAdjacency Convolution R²=0.760]
         F1 & F2 & F3 --> G[Saved Artifacts & metrics.json]
 
         D --> H[Google OR-Tools MILP Solver\nTrees, Roofs, Water, Shaded Stops, Cooling Centers]

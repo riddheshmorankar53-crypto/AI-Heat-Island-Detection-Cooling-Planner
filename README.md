@@ -160,17 +160,17 @@ Free instances sleep after ~15 minutes idle, so the first visit afterwards takes
 
 ## 🧪 Automated Testing
 
-Run the full pytest suite (32 unit & integration tests):
+Run the full pytest suite (35 unit & integration tests):
 ```bash
 pytest tests/ -v
 ```
 
-All 32 tests cover:
+All 35 tests cover:
 - 100m grid dimensions, valid geometries, and environmental ranges.
 - Feature pipeline spatial-block train/val/test split (no neighbour leakage).
 - Satellite raster-to-cell mapping.
 - ML regression & classification models.
-- Google OR-Tools budget & spatial constraints.
+- Google OR-Tools budget & spatial constraints, and the measured tree-cooling calibration.
 - Pedestrian heat-safe routing pathfinding.
 - FastAPI REST endpoints, including heat alerts and forecast escalation.
 
@@ -232,7 +232,7 @@ All 32 tests cover:
 │   ├── architecture.md           # Mermaid diagrams & system architecture
 │   ├── mathematical_formulation.md# Equations for HVI, MILP solver & routing
 │   └── api_reference.md          # Complete REST API reference
-├── tests/                        # 32 unit and integration tests
+├── tests/                        # 35 unit and integration tests
 ├── Dockerfile                    # Single container: dashboard + API
 ├── render.yaml                   # Render Blueprint (free live demo)
 ├── docker-compose.yml            # Runs the Dockerfile locally
