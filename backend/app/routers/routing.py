@@ -19,15 +19,15 @@ heat_router = HeatSafeRouter()
 def get_routing_landmarks() -> List[Dict[str, Any]]:
     """Retrieve preset Pune landmarks for rapid origin/destination selection."""
     landmarks = []
-    for nid, data in heat_router.nodes.items():
+    for lm in heat_router.landmarks:
         landmarks.append(
             {
-                "id": nid,
-                "name": nid.replace("_", " ").title(),
-                "lon": data["lon"],
-                "lat": data["lat"],
-                "ambient_lst": data.get("ambient_lst", 36.0),
-                "type": data.get("type", "standard"),
+                "id": lm["id"],
+                "name": lm["id"].replace("_", " ").title(),
+                "lon": lm["lon"],
+                "lat": lm["lat"],
+                "ambient_lst": lm.get("ambient_lst") or 36.0,
+                "type": lm.get("type", "standard"),
             }
         )
     return sorted(landmarks, key=lambda x: x["name"])

@@ -20,63 +20,63 @@
   },
   "models": {
     "baseline_ridge_lst": {
-      "rmse": 1.1037,
-      "mae": 0.8906,
-      "r2": 0.6936
+      "rmse": 1.1169,
+      "mae": 0.8915,
+      "r2": 0.6862
     },
     "baseline_logistic_hotspot": {
-      "accuracy": 0.9115,
-      "f1_score": 0.5263
+      "accuracy": 0.8984,
+      "f1_score": 0.6517
     },
     "lightgbm_lst_regressor": {
-      "rmse": 1.0518,
-      "mae": 0.8394,
-      "r2": 0.7217,
+      "rmse": 1.0618,
+      "mae": 0.8511,
+      "r2": 0.7164,
       "feature_importances": {
-        "ndbi": 0.1305,
-        "ndvi": 0.1039,
-        "tree_canopy_pct": 0.0455,
-        "impervious_pct": 0.1045,
-        "albedo": 0.1221,
-        "elevation_m": 0.2115,
-        "pop_density_sqkm": 0.1187,
-        "vuln_population_ratio": 0.0813,
-        "dist_cooling_facility_m": 0.0819
+        "ndbi": 0.1286,
+        "ndvi": 0.1063,
+        "tree_canopy_pct": 0.057,
+        "impervious_pct": 0.1143,
+        "albedo": 0.1449,
+        "elevation_m": 0.2064,
+        "pop_density_sqkm": 0.1036,
+        "vuln_population_ratio": 0.0131,
+        "dist_cooling_facility_m": 0.1259
       }
     },
     "lightgbm_hotspot_classifier": {
-      "accuracy": 0.9623,
-      "precision": 0.65,
-      "recall": 0.7429,
-      "f1_score": 0.6933,
+      "accuracy": 0.9115,
+      "precision": 0.5464,
+      "recall": 0.8413,
+      "f1_score": 0.6625,
       "confusion_matrix": [
         [
-          561,
-          14
+          503,
+          44
         ],
         [
-          9,
-          26
+          10,
+          53
         ]
       ],
       "feature_importances": {
-        "ndbi": 0.1678,
-        "ndvi": 0.1029,
-        "tree_canopy_pct": 0.0411,
-        "impervious_pct": 0.1056,
-        "albedo": 0.1294,
-        "elevation_m": 0.1217,
-        "pop_density_sqkm": 0.1163,
-        "vuln_population_ratio": 0.1021,
-        "dist_cooling_facility_m": 0.1131
+        "ndbi": 0.1414,
+        "ndvi": 0.0888,
+        "tree_canopy_pct": 0.085,
+        "impervious_pct": 0.1242,
+        "albedo": 0.105,
+        "elevation_m": 0.1283,
+        "pop_density_sqkm": 0.1922,
+        "vuln_population_ratio": 0.0079,
+        "dist_cooling_facility_m": 0.1272
       }
     },
     "spatial_microclimate_gnn": {
-      "rmse": 1.0005,
-      "mae": 0.779,
-      "r2": 0.7482,
-      "train_rmse": 1.0893,
-      "val_rmse": 1.105
+      "rmse": 0.9765,
+      "mae": 0.7719,
+      "r2": 0.7601,
+      "train_rmse": 1.0681,
+      "val_rmse": 1.0987
     }
   }
 }

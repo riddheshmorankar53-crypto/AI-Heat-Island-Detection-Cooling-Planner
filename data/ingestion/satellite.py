@@ -337,10 +337,8 @@ def apply_real_satellite(gdf, bbox: List[float]):
     """
     Replace the satellite-derivable grid columns with real observations:
     LST (Landsat 8/9), NDVI / NDBI / albedo / canopy % / impervious % (Sentinel-2 L2A),
-    elevation (Copernicus DEM). Demographics and cooling-facility distance stay synthetic.
+    elevation (Copernicus DEM). Call `recompute_derived` afterwards for HVI and hotspots.
     """
-    from data.synthetic.generator import compute_hvi_and_hotspots
-
     layout = grid_layout(gdf)
     lst = landsat_lst(bbox, layout)
     s2 = sentinel2_indices(bbox, layout)
@@ -368,15 +366,5 @@ def apply_real_satellite(gdf, bbox: List[float]):
     decimals = {"lst_celsius": 2, "ndvi": 4, "ndbi": 4, "albedo": 4, "elevation_m": 1}
     out = out.round({c: decimals.get(c, 2) for c in REAL_COLUMNS})
 
-    hvi, hotspots = compute_hvi_and_hotspots(
-        out["lst_celsius"].to_numpy(),
-        out["vuln_population_ratio"].to_numpy(),
-        out["pop_density_sqkm"].to_numpy(),
-        out["tree_canopy_pct"].to_numpy(),
-        out["dist_cooling_facility_m"].to_numpy(),
-    )
-    out["lst_anomaly_celsius"] = np.round(out["lst_celsius"] - out["lst_celsius"].mean(), 2)
-    out["heat_vulnerability_index"] = np.round(hvi, 4)
-    out["is_critical_hotspot"] = hotspots
     out["satellite_source"] = "landsat-c2-l2 + sentinel-2-l2a + cop-dem-glo-30"
     return out

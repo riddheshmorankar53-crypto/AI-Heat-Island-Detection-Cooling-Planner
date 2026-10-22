@@ -43,13 +43,15 @@ flowchart LR
      - LST from the Landsat 8/9 Collection 2 Level-2 thermal band (6 scenes).
      - NDVI, NDBI, broadband albedo, tree canopy % and impervious % from Sentinel-2 L2A at 10m, averaged per 100m cell (6 scenes).
      - Elevation from the Copernicus GLO-30 DEM.
-   - **Still synthetic**: population density, vulnerable-population ratio and distance to cooling facilities (no open ward-level census for 2024). The `satellite_source` column records where the satellite fields came from; `is_synthetic: true` stays because the demographics are synthetic.
+   - **Population** from Meta's High Resolution Settlement Layer (HRSL, 30m), aggregated to people per cell (~1.17 million in the AOI). Elderly (60+) and under-5 counts come from the same source.
+   - **Distance to cooling facilities** from OpenStreetMap: 539 hospitals, clinics, community centres, libraries, shelters, drinking-water points, parks and gardens.
+   - **Limitation**: HRSL's age layers apply one district-level census share to every pixel, so the vulnerable-population ratio is a uniform 17.5% across the AOI. It is real but has no variation within the city; ward-level census data would be needed for that. `is_synthetic: true` remains on the grid for this reason, and only for this column.
    - Offline mode (the default) generates a fully synthetic grid with the same schema.
 
 2. **AI Heat Island & Vulnerability Prediction (`/ml`)**:
-   - **Baseline**: Ridge Linear Regression ($R^2 = 0.694$).
-   - **Gradient Boosted Tree (LightGBM)**: LST Regressor ($R^2 = 0.722$, $\text{RMSE} = 1.05^\circ\text{C}$) and Critical Hotspot Classifier ($F_1 = 0.693$, $\text{Recall} = 74.3\%$).
-   - **Graph Neural Network (PyTorch Spatial GCN)**: 2-layer Spatial Graph Convolution over contiguous 100m cells. It is the best LST model ($R^2 = 0.748$, $\text{RMSE} = 1.00^\circ\text{C}$) because neighbouring cells carry real thermal context.
+   - **Baseline**: Ridge Linear Regression ($R^2 = 0.686$).
+   - **Gradient Boosted Tree (LightGBM)**: LST Regressor ($R^2 = 0.716$, $\text{RMSE} = 1.06^\circ\text{C}$) and Critical Hotspot Classifier ($F_1 = 0.663$, $\text{Recall} = 84.1\%$).
+   - **Graph Neural Network (PyTorch Spatial GCN)**: 2-layer Spatial Graph Convolution over contiguous 100m cells. It is the best LST model ($R^2 = 0.760$, $\text{RMSE} = 0.98^\circ\text{C}$) because neighbouring cells carry real thermal context.
    - **Honest evaluation**: Fixed seed (`42`); train/val/test split by **500m spatial blocks**, so neighbouring (spatially autocorrelated) cells never straddle train and test; scaler fitted on train only; metrics saved to `ml/artifacts/metrics.json`.
 
 3. **Google OR-Tools Cooling Intervention Optimizer (`/ml/optimizer`)**:
@@ -58,10 +60,10 @@ flowchart LR
    - Enforces portfolio diversity, spatial suitability, per-cell limits, and 400m minimum separation between cooling refuges.
 
 4. **Heat-Safe Pedestrian Routing Engine (`/ml/routing`)**:
-   - Pedestrian street network of Pune with shade coverage and ambient LST edge weights.
+   - Real OpenStreetMap walking network (`--live`: 8,809 intersections, 11,710 street segments). Each street's shade and temperature are read from the real grid cells it passes through, sampled every 20m. Named landmarks snap to the nearest street node.
    - Dual-objective Dijkstra search calculating:
      - **Fastest Route**: Shortest physical distance in meters.
-     - **Heat-Safe Route**: Minimizes direct solar thermal exposure and maximizes tree canopy shade, achieving 8% - 13% thermal stress reduction with minimal detours.
+     - **Heat-Safe Route**: Minimizes direct solar thermal exposure and maximizes tree canopy shade, e.g. Shaniwar Wada → Pune Station: 12.9% less heat load for a 159m detour along the river corridor.
 
 5. **Interactive Full-Stack GIS Dashboard (`/frontend` + `/backend`)**:
    - **Frontend**: React + Vite + Leaflet with dynamic choropleths (LST, NDVI, HVI, Hotspots), intervention influence radius buffers, route comparison lines, budget sliders, and a Model Transparency Modal.
@@ -70,22 +72,22 @@ flowchart LR
 6. **Heat Hazard Alerts (`GET /api/v1/alerts`)**:
    - Every critical hotspot ranked by Heat Vulnerability Index: top 10% `extreme`, next 40% `high`, the rest `moderate`.
    - **Early warning**: a 3-day Open-Meteo forecast for Pune (free, no key) raises every alert one level when any day reaches 40°C (IMD heatwave threshold) and two levels at 45°C. If the forecast is unreachable, alerts fall back to satellite data only.
-   - Each alert carries concrete actions (misting hours, temporary shelter where no cooling refuge is within 800m, door-to-door checks where vulnerable residents are concentrated). Clicking an alert in the dashboard flies the map to that cell.
+   - Each alert carries concrete actions (misting hours, temporary shelter where no cooling facility is within a 5-minute walk (400m), door-to-door checks where a cell holds 100+ elderly residents and young children). Clicking an alert in the dashboard flies the map to that cell.
 
 ---
 
 ## 📊 Model Benchmarks (Real Satellite Data, Spatial Block Split, Test N=610, Seed 42)
 
-> Generated by `ml/train.py` on held-out 500m spatial blocks of the real Landsat/Sentinel-2 grid. Earlier versions of this README reported $R^2 \approx 0.93$; those came from synthetic data whose temperature was a formula of the input features, scored with a random (leaky) split.
+> Generated by `ml/train.py` on held-out 500m spatial blocks of the real grid (Landsat / Sentinel-2 / DEM / HRSL / OSM). Earlier versions of this README reported $R^2 \approx 0.93$; those came from synthetic data whose temperature was a formula of the input features, scored with a random (leaky) split.
 
 | Model Architecture | Task | R² Score / Acc | RMSE / F1 | Top Feature Drivers |
 | :--- | :--- | :--- | :--- | :--- |
-| **Ridge Regression** | LST Continuous | $R^2 = 0.694$ | $1.10^\circ\text{C}$ | (linear baseline) |
-| **LightGBM Regressor** | LST Continuous | $R^2 = 0.722$ | $1.05^\circ\text{C}$ | Elevation (21%), NDBI (13%), Albedo (12%), Pop. density (12%) |
-| **Spatial GNN (PyTorch)** | LST with neighbour context | $R^2 = 0.748$ | $1.00^\circ\text{C}$ | Spatial neighbourhood adjacency |
-| **LightGBM Classifier** | Hotspot Detection | $\text{Acc} = 96.2\%$ | $F_1 = 0.693$ | Recall 74.3% (26 of 35 test hotspots caught) |
+| **Ridge Regression** | LST Continuous | $R^2 = 0.686$ | $1.12^\circ\text{C}$ | (linear baseline) |
+| **LightGBM Regressor** | LST Continuous | $R^2 = 0.716$ | $1.06^\circ\text{C}$ | Elevation (21%), Albedo (14%), NDBI (13%), Dist. to cooling (13%) |
+| **Spatial GNN (PyTorch)** | LST with neighbour context | $R^2 = 0.760$ | $0.98^\circ\text{C}$ | Spatial neighbourhood adjacency |
+| **LightGBM Classifier** | Hotspot Detection | $\text{Acc} = 91.2\%$ | $F_1 = 0.663$ | Recall 84.1% (53 of 63 test hotspots caught) |
 
-**Caveat:** population density is synthetic but ranks as a top LST driver, because the synthetic generator makes it densest near the commercial core, which really is hotter. Treat it as a location proxy until real census data replaces it.
+Every model input is now observed data. The one exception is the vulnerable-population ratio, which is uniform (see above), so models gain nothing from it.
 
 ---
 
@@ -104,7 +106,8 @@ pip install -r backend/requirements.txt
 ### Step 2: Generate Grid & Train Models (Reproducible Pipeline)
 ```bash
 # 1. Generate 100m Pune grid and pedestrian network
-#    --live --force pulls real Landsat / Sentinel-2 / DEM data (~1-2 min, needs internet).
+#    --live --force pulls Landsat / Sentinel-2 / DEM / HRSL population and the OSM walking
+#    network and facilities (~5 min, needs internet; Overpass calls are cached in ./cache).
 #    Without flags it reuses data/processed/, or builds a synthetic grid offline.
 python data/pipeline.py --live --force
 
@@ -166,6 +169,9 @@ All 32 tests cover:
 │   ├── config.yaml               # Master application settings & parameters
 │   └── pune_aoi.yaml             # Pune bounding box, CRS & landmark hubs
 ├── data/
+│   ├── ingestion/
+│   │   ├── satellite.py          # Landsat / Sentinel-2 / DEM composites on the grid
+│   │   └── real_context.py       # HRSL population, OSM cooling facilities & walk network
 │   ├── raw/                      # Raw vector & raster storage
 │   ├── processed/                # Processed 100m grid GeoJSON & street network
 │   ├── synthetic/                # Deterministic synthetic data generator

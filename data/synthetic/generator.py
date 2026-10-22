@@ -24,16 +24,34 @@ def compute_hvi_and_hotspots(
     """
     HVI = 0.40 * Exposure (LST normalized) + 0.35 * Sensitivity (Vuln & Pop)
           + 0.25 * (1 - Adaptive Capacity).
+    Sensitivity scales vulnerable ratio and density by their city maxima, so real census-style
+    ratios (~0.1-0.3) and synthetic ones (0.1-0.85) weigh the same.
     Hotspots = LST in the top 18% AND HVI >= 0.62.
     """
     lst_norm = (lst_celsius - np.min(lst_celsius)) / (np.max(lst_celsius) - np.min(lst_celsius))
-    sens_norm = 0.6 * vuln_ratio + 0.4 * (pop_density / np.max(pop_density))
+    sens_norm = 0.6 * (vuln_ratio / np.max(vuln_ratio)) + 0.4 * (pop_density / np.max(pop_density))
     adapt_norm = 0.5 * (canopy_pct / 100.0) + 0.5 * (
         1.0 - np.clip(dist_cooling_facility / 2000.0, 0.0, 1.0)
     )
     hvi = np.clip(0.40 * lst_norm + 0.35 * sens_norm + 0.25 * (1.0 - adapt_norm), 0.05, 0.98)
     is_critical_hotspot = (lst_celsius >= np.percentile(lst_celsius, 82)) & (hvi >= 0.62)
     return hvi, is_critical_hotspot
+
+
+def recompute_derived(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Recompute LST anomaly, HVI and hotspots after input columns change."""
+    hvi, hotspots = compute_hvi_and_hotspots(
+        gdf["lst_celsius"].to_numpy(),
+        gdf["vuln_population_ratio"].to_numpy(),
+        gdf["pop_density_sqkm"].to_numpy(),
+        gdf["tree_canopy_pct"].to_numpy(),
+        gdf["dist_cooling_facility_m"].to_numpy(),
+    )
+    out = gdf.copy()
+    out["lst_anomaly_celsius"] = np.round(out["lst_celsius"] - out["lst_celsius"].mean(), 2)
+    out["heat_vulnerability_index"] = np.round(hvi, 4)
+    out["is_critical_hotspot"] = hotspots
+    return out
 
 
 class PuneSyntheticGridGenerator:

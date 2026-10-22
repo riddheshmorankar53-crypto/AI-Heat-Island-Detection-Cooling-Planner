@@ -67,7 +67,7 @@ Aggregated statistics on urban heat island intensity and vulnerable population a
 Heat hazard alerts for every critical hotspot cell, ranked by Heat Vulnerability Index.
 Base severity is ranked within hotspots: top 10% HVI `extreme`, next 40% `high`, the rest `moderate`.
 A 3-day Open-Meteo forecast for Pune then escalates every alert by `escalation_levels`: +1 if any day's max reaches 40°C, +2 at 45°C (capped at `extreme`). `forecast` is `null` when Open-Meteo is unreachable, and severity falls back to the base tiers.
-Cells more than 800 m from a cooling refuge get a "deploy temporary shelter" action.
+Cells more than 400 m (a 5-minute walk) from a cooling facility get a "deploy temporary shelter" action, and cells holding 100+ elderly residents and young children get a door-to-door check action.
 
 **Query Parameters**:
 - `limit` (int, default 20, 1–500): Number of alerts returned (highest risk first). `total_alerts` and `counts` always cover all hotspots.

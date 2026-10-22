@@ -14,8 +14,8 @@ Where:
 - **Weights**: $w_E = 0.40$ (Thermal Exposure), $w_S = 0.35$ (Socioeconomic Sensitivity), $w_A = 0.25$ (Adaptive Capacity).
 - **Exposure ($E_i$)**: Min-max normalized summer daytime Land Surface Temperature:
   $$E_i = \frac{\text{LST}_i - \min(\text{LST})}{\max(\text{LST}) - \min(\text{LST})}$$
-- **Sensitivity ($S_i$)**: Population density and vulnerable demographics (elderly $>65$, children $<5$, low-income informal settlements):
-  $$S_i = 0.60 \cdot \text{VulnRatio}_i + 0.40 \cdot \frac{\text{PopDensity}_i}{\max(\text{PopDensity})}$$
+- **Sensitivity ($S_i$)**: Population density and the share of elderly (60+) and under-5 residents (HRSL in `--live` mode). Both terms are scaled by their city maximum so real and synthetic ratios weigh the same:
+  $$S_i = 0.60 \cdot \frac{\text{VulnRatio}_i}{\max(\text{VulnRatio})} + 0.40 \cdot \frac{\text{PopDensity}_i}{\max(\text{PopDensity})}$$
 - **Adaptive Capacity ($A_i$)**: Protective natural and built buffers:
   $$A_i = 0.50 \cdot \left(\frac{\text{Canopy}_i}{100}\right) + 0.50 \cdot \left(1 - \min\left(1.0, \frac{\text{DistCoolingFacility}_i}{2000}\right)\right)$$
 

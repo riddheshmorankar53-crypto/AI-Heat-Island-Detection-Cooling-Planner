@@ -24,9 +24,14 @@ import pandas as pd
 import yaml
 from shapely.geometry import Point
 
+from data.ingestion.real_context import (
+    apply_real_cooling_distance,
+    apply_real_population,
+    build_walk_network,
+)
 from data.ingestion.satellite import apply_real_satellite
 from data.storage.exporter import DataExporter
-from data.synthetic.generator import PuneSyntheticGridGenerator
+from data.synthetic.generator import PuneSyntheticGridGenerator, recompute_derived
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("pune_data_pipeline")
@@ -144,7 +149,7 @@ class PuneDataPipeline:
         seed = int(self.config.get("project", {}).get("seed", 42))
 
         # The canonical grid schema (what ml/ and backend/ consume) comes from the
-        # synthetic generator; --live then overwrites satellite-derivable columns.
+        # synthetic generator; --live then overwrites every column it has real data for.
         generator = PuneSyntheticGridGenerator(
             bbox={
                 "min_lat": bbox["min_latitude"],
@@ -160,15 +165,11 @@ class PuneDataPipeline:
         gdf = generator.generate()
         gdf["satellite_source"] = "synthetic"
         if not synthetic:
-            gdf = apply_real_satellite(
-                gdf,
-                [
-                    bbox["min_longitude"],
-                    bbox["min_latitude"],
-                    bbox["max_longitude"],
-                    bbox["max_latitude"],
-                ],
-            )
+            bbox_list = self._bbox_list()
+            gdf = apply_real_satellite(gdf, bbox_list)
+            gdf = apply_real_population(gdf)
+            gdf = apply_real_cooling_distance(gdf, bbox_list)
+            gdf = recompute_derived(gdf)
 
         # Export to GeoParquet, GeoJSON, and attempt PostGIS
         export_results = self.exporter.export_all(
@@ -183,9 +184,15 @@ class PuneDataPipeline:
         logger.info("Export completed: %s", export_results)
         return gdf
 
+    def _bbox_list(self) -> list:
+        """[min_lon, min_lat, max_lon, max_lat] for STAC / OSMnx queries."""
+        bb = self._get_bbox()
+        return [bb["min_longitude"], bb["min_latitude"], bb["max_longitude"], bb["max_latitude"]]
+
     def generate_pedestrian_network(
         self,
         grid_gdf: Optional[gpd.GeoDataFrame] = None,
+        live: bool = False,
     ) -> Dict[str, Any]:
         """
         Construct a pedestrian walking network graph across Central Pune.
@@ -228,6 +235,10 @@ class PuneDataPipeline:
             ("KASBA_PETH", 73.8590, 18.5220, "heritage_dense"),
             ("SOMWAR_PETH", 73.8660, 18.5240, "residential"),
         ]
+
+        if live:
+            payload = build_walk_network(grid_gdf, self._bbox_list(), key_nodes)
+            return self._save_network(payload)
 
         street_segments = [
             ("SHANIWAR_WADA", "BUDHWAR_PETH", 0.08, "narrow_bazaar"),
@@ -322,13 +333,16 @@ class PuneDataPipeline:
             "nodes": nodes_dict,
             "edges": edges_list,
         }
+        return self._save_network(graph_payload)
 
+    def _save_network(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Write the router's network JSON (compact: the real OSM network is ~10k edges)."""
         self.street_output_path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.street_output_path, "w", encoding="utf-8") as f:
-            json.dump(graph_payload, f, indent=2)
+            json.dump(payload, f, separators=(",", ":"))
 
         logger.info("Saved pedestrian street network to %s", self.street_output_path)
-        return graph_payload
+        return payload
 
     def generate_data_quality_report(
         self,
@@ -506,7 +520,7 @@ def main() -> None:
 
     pipeline = PuneDataPipeline()
     gdf = pipeline.generate_and_save_grid(force_recompute=args.force, synthetic=args.synthetic)
-    pipeline.generate_pedestrian_network(grid_gdf=gdf)
+    pipeline.generate_pedestrian_network(grid_gdf=gdf, live=not args.synthetic)
 
     if args.report:
         pipeline.generate_data_quality_report(gdf=gdf)

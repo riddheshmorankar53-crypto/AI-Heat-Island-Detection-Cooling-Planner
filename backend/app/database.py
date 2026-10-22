@@ -16,7 +16,8 @@ from backend.app.config import settings
 # grid is synthetic or real satellite data.
 ALERT_EXTREME_PCTL = 0.90
 ALERT_HIGH_PCTL = 0.50
-ALERT_REFUGE_DISTANCE_M = 800.0
+ALERT_REFUGE_DISTANCE_M = 400.0  # ~5-minute walk
+ALERT_VULNERABLE_RESIDENTS = 100  # elderly 60+ and under-5s living in the cell
 SEVERITIES = ("moderate", "high", "extreme")
 
 
@@ -124,8 +125,11 @@ class SpatialDataManager:
                 actions.append(
                     f"No cooling refuge within {int(c['dist_cooling_facility_m'])} m: deploy temporary shelter"
                 )
-            if c["vuln_population_ratio"] >= 0.3:
-                actions.append("Door-to-door checks on elderly and young children")
+            vulnerable = c["population"] * c["vuln_population_ratio"]
+            if vulnerable >= ALERT_VULNERABLE_RESIDENTS:
+                actions.append(
+                    f"Door-to-door checks on ~{int(vulnerable)} elderly residents and young children"
+                )
 
             alerts.append(
                 {

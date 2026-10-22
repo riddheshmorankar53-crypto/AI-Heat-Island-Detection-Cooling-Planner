@@ -31,6 +31,14 @@ class HeatSafeRouter:
 
         self.nodes = self.raw_data["nodes"]
         self.edges = self.raw_data["edges"]
+        # Named places for the UI; the synthetic network's nodes are themselves landmarks
+        self.landmarks = self.raw_data.get("landmarks") or [
+            {**d, "node_id": nid} for nid, d in self.nodes.items()
+        ]
+        self._node_ids = list(self.nodes)
+        self._node_xy = np.array(
+            [[self.nodes[n]["lon"], self.nodes[n]["lat"]] for n in self._node_ids]
+        )
         self.graph = self._build_graph()
 
     def _build_graph(self) -> nx.Graph:
@@ -60,15 +68,11 @@ class HeatSafeRouter:
 
     def find_nearest_node(self, lon: float, lat: float) -> str:
         """Find the closest street graph node to given coordinates."""
-        best_node = None
-        best_dist = float("inf")
-        for nid, data in self.nodes.items():
-            dx = (lon - data["lon"]) * 105000.0
-            dy = (lat - data["lat"]) * 111000.0
-            dist = float(np.hypot(dx, dy))
-            if dist < best_dist:
-                best_dist = dist
-                best_node = nid
+        dists = np.hypot(
+            (self._node_xy[:, 0] - lon) * 105000.0, (self._node_xy[:, 1] - lat) * 111000.0
+        )
+        best = int(np.argmin(dists))
+        best_node, best_dist = self._node_ids[best], float(dists[best])
         if best_dist > MAX_SNAP_M:
             raise ValueError(
                 f"Point ({lon}, {lat}) is {best_dist:.0f} m from the street network (limit {MAX_SNAP_M:.0f} m)"
@@ -95,9 +99,14 @@ class HeatSafeRouter:
             # Thermal exposure is proportional to distance walked under unshaded solar heat
             total_heat_exposure += seg_len * h * (1.0 - s * 0.75)
 
-            if i == 0:
-                coordinates.append([self.nodes[u]["lon"], self.nodes[u]["lat"]])
-            coordinates.append([self.nodes[v]["lon"], self.nodes[v]["lat"]])
+            # Street shape, oriented u -> v (stored geometry may run either way)
+            geom = edge_data["geometry"]
+            ux, uy = self.nodes[u]["lon"], self.nodes[u]["lat"]
+            if np.hypot(geom[0][0] - ux, geom[0][1] - uy) > np.hypot(
+                geom[-1][0] - ux, geom[-1][1] - uy
+            ):
+                geom = geom[::-1]
+            coordinates.extend(geom if i == 0 else geom[1:])
 
         shade_pct = round((total_shade_len / max(1.0, total_len)) * 100.0, 1)
         est_walk_mins = round((total_len / 1000.0) / 4.5 * 60.0, 1)  # 4.5 km/h
