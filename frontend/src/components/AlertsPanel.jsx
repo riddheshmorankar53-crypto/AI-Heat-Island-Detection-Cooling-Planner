@@ -1,0 +1,85 @@
+import React from 'react';
+import { Siren, Thermometer, Users, MapPin } from 'lucide-react';
+
+const SEVERITY = {
+  extreme: { label: 'Extreme', badge: 'badge-rose', color: '#f43f5e' },
+  high: { label: 'High', badge: 'badge-amber', color: '#f59e0b' },
+  moderate: { label: 'Moderate', badge: 'badge-blue', color: '#3b82f6' },
+};
+
+export default function AlertsPanel({ alertsData }) {
+  if (!alertsData) {
+    return (
+      <div className="glass-panel" style={{ padding: '16px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+        Loading heat alerts...
+      </div>
+    );
+  }
+
+  return (
+    <div className="glass-panel" style={{
+      padding: '16px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '12px',
+      maxHeight: 'calc(100vh - 180px)',
+      overflowY: 'auto',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Siren size={18} color="#f43f5e" />
+          <h2 style={{ fontSize: '0.95rem', fontWeight: 700 }}>Heat Hazard Alerts</h2>
+        </div>
+        <span className="badge badge-rose">{alertsData.total_alerts} hotspots</span>
+      </div>
+
+      <div style={{ display: 'flex', gap: '6px' }}>
+        {Object.entries(SEVERITY).map(([key, s]) => (
+          <div key={key} className="glass-card" style={{ flex: 1, padding: '8px', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: s.color }}>
+              {alertsData.counts?.[key] ?? 0}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+        Top {alertsData.alerts.length} cells by Heat Vulnerability Index
+      </p>
+
+      {alertsData.alerts.map((a) => {
+        const s = SEVERITY[a.severity];
+        return (
+          <div key={a.cell_id} className="glass-card" style={{
+            padding: '10px 12px',
+            borderLeft: `3px solid ${s.color}`,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.74rem' }}>{a.cell_id}</span>
+              <span className={`badge ${s.badge}`}>{s.label}</span>
+            </div>
+            <div style={{ display: 'flex', gap: '12px', fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <Thermometer size={12} /> {a.lst_celsius.toFixed(1)}°C (+{a.lst_anomaly_celsius.toFixed(1)})
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <Users size={12} /> {a.population}
+              </span>
+              <span>HVI {a.heat_vulnerability_index.toFixed(2)}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+              <MapPin size={11} /> {a.lat.toFixed(4)}, {a.lon.toFixed(4)}
+            </div>
+            <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '0.72rem', color: 'var(--text-primary)' }}>
+              {a.actions.map((act) => <li key={act}>{act}</li>)}
+            </ul>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

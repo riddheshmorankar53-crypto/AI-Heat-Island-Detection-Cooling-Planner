@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pune Heat Graph</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; background: #0f1019; color: #d8d8e8; font: 13px system-ui, sans-serif; overflow: hidden; }
+  canvas { display: block; cursor: grab; }
+  canvas.dragging { cursor: grabbing; }
+  #title { position: absolute; top: 14px; left: 16px; pointer-events: none; }
+  #title h1 { margin: 0; font-size: 16px; font-weight: 600; }
+  #title p { margin: 4px 0 0; color: #8a8aa8; font-size: 12px; }
+  #legend { position: absolute; bottom: 14px; left: 16px; max-height: 45vh; overflow-y: auto; background: rgba(15,16,25,0.85); padding: 10px 12px; border-radius: 8px; }
+  #legend div { display: flex; align-items: center; gap: 8px; margin: 3px 0; white-space: nowrap; }
+  #legend span.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  #legend span.n { color: #6a6a88; }
+  #tip { position: absolute; pointer-events: none; background: rgba(20,21,34,0.95); border: 1px solid #2a2b44; padding: 6px 9px; border-radius: 6px; display: none; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div id="title">
+  <h1>Pune urban heat — feature-similarity graph</h1>
+  <p>Each node is a 100m cell, linked to its 5 most similar cells. Colour = Louvain community, size = degree.<br>Scroll to zoom · drag to pan · hover to highlight neighbours · click to pin</p>
+</div>
+<div id="legend"></div>
+<div id="tip"></div>
+<canvas id="c"></canvas>
+<script>
+const DATA = /*GRAPH_DATA*/null;
+const PALETTE = ["#f28e2b", "#e15759", "#4e79a7", "#76b7b2", "#edc948", "#b07aa1", "#59a14f"];
+const HULL_COMMUNITIES = 4;   // hulls behind the N largest communities
+const LABEL_TOP = 15;
+
+const color = c => PALETTE[c % PALETTE.length];
+const nodes = DATA.nodes, links = DATA.edges;
+const byId = new Map(nodes.map(n => [n.id, n]));
+const neighbours = new Map(nodes.map(n => [n.id, new Set()]));
+links.forEach(l => { neighbours.get(l.source).add(l.target); neighbours.get(l.target).add(l.source); });
+
+const [dMin, dMax] = d3.extent(nodes, n => n.size);
+const radius = d3.scaleSqrt().domain([dMin, dMax]).range([3, 12]);
+nodes.forEach(n => n.r = radius(n.size));
+const labelled = new Set([...nodes].sort((a, b) => b.size - a.size).slice(0, LABEL_TOP).map(n => n.id));
+
+// Legend
+d3.select("#legend").selectAll("div").data(DATA.communities).join("div")
+  .html(c => `<span class="dot" style="background:${color(c.id)}"></span>${c.name} <span class="n">(${c.size})</span>`);
+
+// Canvas setup (HiDPI aware)
+const canvas = document.getElementById("c"), ctx = canvas.getContext("2d");
+let W, H, dpr;
+function resize() {
+  dpr = window.devicePixelRatio || 1; W = innerWidth; H = innerHeight;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + "px"; canvas.style.height = H + "px";
+  draw();
+}
+let transform = d3.zoomIdentity.translate(innerWidth / 2, innerHeight / 2).scale(0.45);
+let hovered = null;
+
+// Seed each community around its own anchor so the force layout untangles quickly
+const rand = d3.randomNormal.source(d3.randomLcg(42))(0, 90);
+const nComm = DATA.communities.length;
+nodes.forEach(n => {
+  const a = 2 * Math.PI * n.community / nComm;
+  n.x = 420 * Math.cos(a) + rand(); n.y = 420 * Math.sin(a) + rand();
+});
+
+const sim = d3.forceSimulation(nodes)
+  .force("link", d3.forceLink(links).id(n => n.id).distance(14).strength(l => 0.8 * l.weight))
+  .force("charge", d3.forceManyBody().strength(-22).distanceMax(300))
+  .force("collide", d3.forceCollide(n => n.r + 1))
+  .force("x", d3.forceX().strength(0.015))
+  .force("y", d3.forceY().strength(0.015))
+  .alphaDecay(0.03)
+  .on("tick", draw);
+
+// Group edges by source community once: one stroke() per colour instead of per edge
+const edgesByComm = d3.group(links, l => (typeof l.source === "object" ? l.source : byId.get(l.source)).community);
+
+function curve(l) {
+  const s = l.source, t = l.target, mx = (s.x + t.x) / 2, my = (s.y + t.y) / 2;
+  const dx = t.x - s.x, dy = t.y - s.y;
+  ctx.moveTo(s.x, s.y);
+  ctx.quadraticCurveTo(mx - dy * 0.15, my + dx * 0.15, t.x, t.y);
+}
+
+function draw() {
+  if (!W) return;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  ctx.translate(transform.x, transform.y);
+  ctx.scale(transform.k, transform.k);
+  const focus = hovered ? neighbours.get(hovered.id) : null;
+  const dim = n => focus && n !== hovered && !focus.has(n.id);
+
+  // Community hulls
+  ctx.fillStyle = "rgba(59,59,143,0.2)";
+  for (const c of DATA.communities.slice(0, HULL_COMMUNITIES)) {
+    const hull = d3.polygonHull(nodes.filter(n => n.community === c.id).map(n => [n.x, n.y]));
+    if (!hull) continue;
+    ctx.beginPath(); hull.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fill();
+  }
+
+  // Edges
+  ctx.lineWidth = 0.7 / Math.sqrt(transform.k);
+  ctx.globalAlpha = focus ? 0.05 : 0.25;
+  for (const [c, ls] of edgesByComm) {
+    ctx.strokeStyle = color(c); ctx.beginPath(); ls.forEach(curve); ctx.stroke();
+  }
+  if (focus) {
+    ctx.globalAlpha = 0.9; ctx.lineWidth = 1.2 / Math.sqrt(transform.k);
+    links.filter(l => l.source === hovered || l.target === hovered).forEach(l => {
+      ctx.strokeStyle = color(l.source.community); ctx.beginPath(); curve(l); ctx.stroke();
+    });
+  }
+
+  // Nodes
+  for (const n of nodes) {
+    ctx.globalAlpha = dim(n) ? 0.12 : 1;
+    ctx.fillStyle = color(n.community);
+    ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, 2 * Math.PI); ctx.fill();
+    if (n.fx != null && n.pinned) { ctx.strokeStyle = "#fff"; ctx.lineWidth = 1 / transform.k; ctx.stroke(); }
+  }
+
+  // Labels: top-degree nodes by default, hovered node + neighbours on hover
+  ctx.globalAlpha = 1; ctx.fillStyle = "#e8e8f4"; ctx.textAlign = "center";
+  ctx.font = `${11 / transform.k}px system-ui, sans-serif`;
+  const show = focus ? [hovered, ...[...focus].map(id => byId.get(id))] : nodes.filter(n => labelled.has(n.id));
+  for (const n of show) ctx.fillText(n.label, n.x, n.y - n.r - 3 / transform.k);
+}
+
+// Hit testing in graph coordinates
+function nodeAt(event) {
+  const [px, py] = d3.pointer(event, canvas);
+  const [x, y] = transform.invert([px, py]);
+  const n = sim.find(x, y, 20 / transform.k);
+  return n && Math.hypot(n.x - x, n.y - y) <= n.r + 4 / transform.k ? n : null;
+}
+
+const tip = document.getElementById("tip");
+canvas.addEventListener("mousemove", e => {
+  const n = nodeAt(e);
+  if (n !== hovered) { hovered = n; draw(); }
+  if (n) {
+    const comm = DATA.communities[n.community].name;
+    tip.innerHTML = `<b>${n.label}</b><br>${comm}<br>LST ${n.lst}°C · HVI ${n.hvi}${n.hotspot ? " · <b>critical hotspot</b>" : ""}<br>degree ${n.size}${n.pinned ? " · pinned" : ""}`;
+    tip.style.left = e.clientX + 14 + "px"; tip.style.top = e.clientY + 14 + "px"; tip.style.display = "block";
+  } else tip.style.display = "none";
+});
+canvas.addEventListener("mouseleave", () => { hovered = null; tip.style.display = "none"; draw(); });
+canvas.addEventListener("click", e => {
+  const n = nodeAt(e);
+  if (!n) return;
+  n.pinned = !n.pinned;
+  n.fx = n.pinned ? n.x : null; n.fy = n.pinned ? n.y : null;
+  sim.alphaTarget(0).alpha(0.1).restart();
+});
+
+const zoom = d3.zoom().scaleExtent([0.05, 8]).on("zoom", e => { transform = e.transform; draw(); });
+d3.select(canvas)
+  .call(d3.drag()
+    .subject(e => nodeAt(e.sourceEvent))
+    .on("start", e => { canvas.classList.add("dragging"); if (!e.active) sim.alphaTarget(0.2).restart(); e.subject.fx = e.subject.x; e.subject.fy = e.subject.y; })
+    .on("drag", e => { const [x, y] = transform.invert(d3.pointer(e.sourceEvent, canvas)); e.subject.fx = x; e.subject.fy = y; })
+    .on("end", e => { canvas.classList.remove("dragging"); if (!e.active) sim.alphaTarget(0); if (!e.subject.pinned) { e.subject.fx = null; e.subject.fy = null; } }))
+  .call(zoom)
+  .call(zoom.transform, transform);
+
+addEventListener("resize", resize);
+resize();
+</script>
+</body>
+</html>

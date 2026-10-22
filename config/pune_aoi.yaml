@@ -1,0 +1,55 @@
+# Pune Urban Cooling Planner - Pilot Area of Interest (AOI) Configuration
+aoi:
+  name: "Pune Central Core Pilot"
+  city: "Pune"
+  state: "Maharashtra"
+  country: "India"
+  crs_geographic: "EPSG:4326"
+  crs_projected: "EPSG:32643"  # UTM Zone 43N
+  grid_resolution_meters: 100.0
+
+  # Bounding Box coordinates (WGS84: min_lon, min_lat, max_lon, max_lat)
+  bbox:
+    min_lat: 18.4900
+    min_lon: 73.8250
+    max_lat: 18.5450
+    max_lon: 73.8850
+
+  center:
+    lat: 18.5175
+    lon: 73.8550
+
+  # Key geographic landmarks for microclimate grounding & routing
+  landmarks:
+    - name: "Shaniwar Wada"
+      lat: 18.5196
+      lon: 73.8553
+      type: "heritage_core"
+    - name: "Pune Railway Station"
+      lat: 18.5284
+      lon: 73.8744
+      type: "transit_hub"
+    - name: "Shivajinagar Station"
+      lat: 18.5322
+      lon: 73.8528
+      type: "transit_hub"
+    - name: "Swargate Bus Terminal"
+      lat: 18.5018
+      lon: 73.8580
+      type: "transit_hub"
+    - name: "Fergusson College Campus"
+      lat: 18.5236
+      lon: 73.8402
+      type: "green_zone"
+    - name: "Saras Baug & Peshwe Park"
+      lat: 18.5005
+      lon: 73.8532
+      type: "park_water"
+    - name: "Budhwar Peth Core"
+      lat: 18.5165
+      lon: 73.8585
+      type: "dense_commercial"
+    - name: "Mutha Riverfront (Deccan)"
+      lat: 18.5160
+      lon: 73.8480
+      type: "river_corridor"

@@ -1,0 +1,52 @@
+# Urban Cooling Planner - City Configuration: Pune, India
+city:
+  name: "Pune"
+  state: "Maharashtra"
+  country: "India"
+  
+  # Spatial reference systems
+  crs:
+    projected: "EPSG:32643"  # WGS 84 / UTM Zone 43N (Metric calculations)
+    geographic: "EPSG:4326"   # WGS 84 (GeoJSON & Web Maps)
+  
+  # Metric grid resolution
+  grid_size_meters: 100.0
+
+  # Pilot Area of Interest (Central Core) Bounding Box (WGS 84)
+  bounding_box:
+    min_latitude: 18.4900
+    min_longitude: 73.8250
+    max_latitude: 18.5450
+    max_longitude: 73.8850
+
+  center:
+    latitude: 18.5175
+    longitude: 73.8550
+
+  # Satellite and meteorological analysis temporal windows (Summer peak heat seasons)
+  summer_date_ranges:
+    - season: "Summer 2023"
+      start_date: "2023-03-01"
+      end_date: "2023-06-15"
+      peak_heat_window: "2023-04-15 to 2023-05-31"
+    - season: "Summer 2024"
+      start_date: "2024-03-01"
+      end_date: "2024-06-15"
+      peak_heat_window: "2024-04-15 to 2024-05-31"
+    - season: "Summer 2025"
+      start_date: "2025-03-01"
+      end_date: "2025-06-15"
+      peak_heat_window: "2025-04-15 to 2025-05-31"
+
+  # Key urban wards and historical Peth areas within AOI
+  priority_zones:
+    - id: "SHIVAJINAGAR"
+      name: "Shivajinagar Civic & Transit Hub"
+    - id: "BUDHWAR_PETH"
+      name: "Budhwar & Raviwar Peth Commercial Core"
+    - id: "SWARGATE"
+      name: "Swargate Transit Nexus"
+    - id: "MUTHA_RIVER"
+      name: "Mutha Riverfront Cooling Corridor"
+    - id: "FERGUSSON_HILLS"
+      name: "Fergusson & Vetal Tekdi Green Lungs"

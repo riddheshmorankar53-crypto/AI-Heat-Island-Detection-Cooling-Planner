@@ -1,0 +1,797 @@
+{
+  "metadata": {
+    "city": "Pune",
+    "aoi": "Central Core",
+    "nodes_count": 22,
+    "edges_count": 32,
+    "is_synthetic": true
+  },
+  "nodes": {
+    "SHANIWAR_WADA": {
+      "id": "SHANIWAR_WADA",
+      "lon": 73.8553,
+      "lat": 18.5196,
+      "type": "heritage",
+      "ambient_lst": 39.78,
+      "hvi": 0.7049
+    },
+    "BUDHWAR_PETH": {
+      "id": "BUDHWAR_PETH",
+      "lon": 73.8585,
+      "lat": 18.5165,
+      "type": "dense_core",
+      "ambient_lst": 41.95,
+      "hvi": 0.76
+    },
+    "RAVIWAR_PETH": {
+      "id": "RAVIWAR_PETH",
+      "lon": 73.862,
+      "lat": 18.514,
+      "type": "market",
+      "ambient_lst": 39.74,
+      "hvi": 0.6987
+    },
+    "NANA_PETH": {
+      "id": "NANA_PETH",
+      "lon": 73.865,
+      "lat": 18.511,
+      "type": "commercial",
+      "ambient_lst": 41.64,
+      "hvi": 0.7152
+    },
+    "SWARGATE_NORTH": {
+      "id": "SWARGATE_NORTH",
+      "lon": 73.858,
+      "lat": 18.506,
+      "type": "transit",
+      "ambient_lst": 41.72,
+      "hvi": 0.7618
+    },
+    "SWARGATE_TERMINAL": {
+      "id": "SWARGATE_TERMINAL",
+      "lon": 73.858,
+      "lat": 18.5018,
+      "type": "transit",
+      "ambient_lst": 42.86,
+      "hvi": 0.8412
+    },
+    "SARAS_BAUG": {
+      "id": "SARAS_BAUG",
+      "lon": 73.8532,
+      "lat": 18.5005,
+      "type": "park",
+      "ambient_lst": 41.09,
+      "hvi": 0.7484
+    },
+    "TILAK_ROAD_MID": {
+      "id": "TILAK_ROAD_MID",
+      "lon": 73.851,
+      "lat": 18.509,
+      "type": "arterial",
+      "ambient_lst": 39.75,
+      "hvi": 0.6823
+    },
+    "DECCAN_GYMKHANA": {
+      "id": "DECCAN_GYMKHANA",
+      "lon": 73.843,
+      "lat": 18.516,
+      "type": "sub_core",
+      "ambient_lst": 35.34,
+      "hvi": 0.4856
+    },
+    "FC_ROAD_SOUTH": {
+      "id": "FC_ROAD_SOUTH",
+      "lon": 73.842,
+      "lat": 18.519,
+      "type": "avenue",
+      "ambient_lst": 35.56,
+      "hvi": 0.4794
+    },
+    "FC_ROAD_CAMPUS": {
+      "id": "FC_ROAD_CAMPUS",
+      "lon": 73.8402,
+      "lat": 18.5236,
+      "type": "academic_green",
+      "ambient_lst": 35.04,
+      "hvi": 0.4798
+    },
+    "SHIVAJINAGAR_COURT": {
+      "id": "SHIVAJINAGAR_COURT",
+      "lon": 73.85,
+      "lat": 18.527,
+      "type": "civic",
+      "ambient_lst": 36.55,
+      "hvi": 0.4901
+    },
+    "SHIVAJINAGAR_STATION": {
+      "id": "SHIVAJINAGAR_STATION",
+      "lon": 73.8528,
+      "lat": 18.5322,
+      "type": "transit",
+      "ambient_lst": 37.04,
+      "hvi": 0.5296
+    },
+    "RIVER_WALK_SOUTH": {
+      "id": "RIVER_WALK_SOUTH",
+      "lon": 73.848,
+      "lat": 18.512,
+      "type": "riverfront",
+      "ambient_lst": 35.36,
+      "hvi": 0.537
+    },
+    "RIVER_WALK_MID": {
+      "id": "RIVER_WALK_MID",
+      "lon": 73.851,
+      "lat": 18.521,
+      "type": "riverfront",
+      "ambient_lst": 36.38,
+      "hvi": 0.4968
+    },
+    "RIVER_WALK_NORTH": {
+      "id": "RIVER_WALK_NORTH",
+      "lon": 73.858,
+      "lat": 18.532,
+      "type": "riverfront",
+      "ambient_lst": 36.55,
+      "hvi": 0.4495
+    },
+    "PUNE_STATION_WEST": {
+      "id": "PUNE_STATION_WEST",
+      "lon": 73.868,
+      "lat": 18.528,
+      "type": "transit",
+      "ambient_lst": 39.27,
+      "hvi": 0.6152
+    },
+    "PUNE_STATION": {
+      "id": "PUNE_STATION",
+      "lon": 73.8744,
+      "lat": 18.5284,
+      "type": "rail_nexus",
+      "ambient_lst": 40.76,
+      "hvi": 0.6549
+    },
+    "JANGALI_MAHARAJ_RD": {
+      "id": "JANGALI_MAHARAJ_RD",
+      "lon": 73.846,
+      "lat": 18.523,
+      "type": "commercial_shaded",
+      "ambient_lst": 36.84,
+      "hvi": 0.6004
+    },
+    "KEM_HOSPITAL_ZONE": {
+      "id": "KEM_HOSPITAL_ZONE",
+      "lon": 73.87,
+      "lat": 18.52,
+      "type": "hospital",
+      "ambient_lst": 40.98,
+      "hvi": 0.6843
+    },
+    "KASBA_PETH": {
+      "id": "KASBA_PETH",
+      "lon": 73.859,
+      "lat": 18.522,
+      "type": "heritage_dense",
+      "ambient_lst": 38.6,
+      "hvi": 0.6357
+    },
+    "SOMWAR_PETH": {
+      "id": "SOMWAR_PETH",
+      "lon": 73.866,
+      "lat": 18.524,
+      "type": "residential",
+      "ambient_lst": 38.93,
+      "hvi": 0.6817
+    }
+  },
+  "edges": [
+    {
+      "source": "SHANIWAR_WADA",
+      "target": "BUDHWAR_PETH",
+      "length_meters": 481.2,
+      "shade_factor": 0.089,
+      "ambient_lst": 40.9,
+      "heat_risk": 0.776,
+      "road_type": "narrow_bazaar",
+      "geometry": [
+        [
+          73.8553,
+          18.5196
+        ],
+        [
+          73.8585,
+          18.5165
+        ]
+      ]
+    },
+    {
+      "source": "BUDHWAR_PETH",
+      "target": "RAVIWAR_PETH",
+      "length_meters": 461.4,
+      "shade_factor": 0.02,
+      "ambient_lst": 40.8,
+      "heat_risk": 0.775,
+      "road_type": "narrow_bazaar",
+      "geometry": [
+        [
+          73.8585,
+          18.5165
+        ],
+        [
+          73.862,
+          18.514
+        ]
+      ]
+    },
+    {
+      "source": "RAVIWAR_PETH",
+      "target": "NANA_PETH",
+      "length_meters": 458.5,
+      "shade_factor": 0.103,
+      "ambient_lst": 40.7,
+      "heat_risk": 0.764,
+      "road_type": "commercial",
+      "geometry": [
+        [
+          73.862,
+          18.514
+        ],
+        [
+          73.865,
+          18.511
+        ]
+      ]
+    },
+    {
+      "source": "NANA_PETH",
+      "target": "SWARGATE_NORTH",
+      "length_meters": 922.7,
+      "shade_factor": 0.148,
+      "ambient_lst": 41.7,
+      "heat_risk": 0.834,
+      "road_type": "arterial",
+      "geometry": [
+        [
+          73.865,
+          18.511
+        ],
+        [
+          73.858,
+          18.506
+        ]
+      ]
+    },
+    {
+      "source": "SWARGATE_NORTH",
+      "target": "SWARGATE_TERMINAL",
+      "length_meters": 464.3,
+      "shade_factor": 0.041,
+      "ambient_lst": 42.3,
+      "heat_risk": 0.878,
+      "road_type": "transit_corridor",
+      "geometry": [
+        [
+          73.858,
+          18.506
+        ],
+        [
+          73.858,
+          18.5018
+        ]
+      ]
+    },
+    {
+      "source": "SWARGATE_TERMINAL",
+      "target": "SARAS_BAUG",
+      "length_meters": 526.6,
+      "shade_factor": 0.411,
+      "ambient_lst": 42.0,
+      "heat_risk": 0.855,
+      "road_type": "park_perimeter",
+      "geometry": [
+        [
+          73.858,
+          18.5018
+        ],
+        [
+          73.8532,
+          18.5005
+        ]
+      ]
+    },
+    {
+      "source": "SARAS_BAUG",
+      "target": "TILAK_ROAD_MID",
+      "length_meters": 967.9,
+      "shade_factor": 0.354,
+      "ambient_lst": 40.4,
+      "heat_risk": 0.744,
+      "road_type": "shaded_avenue",
+      "geometry": [
+        [
+          73.8532,
+          18.5005
+        ],
+        [
+          73.851,
+          18.509
+        ]
+      ]
+    },
+    {
+      "source": "TILAK_ROAD_MID",
+      "target": "DECCAN_GYMKHANA",
+      "length_meters": 1145.3,
+      "shade_factor": 0.291,
+      "ambient_lst": 37.5,
+      "heat_risk": 0.539,
+      "road_type": "urban_artery",
+      "geometry": [
+        [
+          73.851,
+          18.509
+        ],
+        [
+          73.843,
+          18.516
+        ]
+      ]
+    },
+    {
+      "source": "TILAK_ROAD_MID",
+      "target": "SWARGATE_NORTH",
+      "length_meters": 809.9,
+      "shade_factor": 0.199,
+      "ambient_lst": 40.7,
+      "heat_risk": 0.767,
+      "road_type": "commercial_link",
+      "geometry": [
+        [
+          73.851,
+          18.509
+        ],
+        [
+          73.858,
+          18.506
+        ]
+      ]
+    },
+    {
+      "source": "DECCAN_GYMKHANA",
+      "target": "FC_ROAD_SOUTH",
+      "length_meters": 348.0,
+      "shade_factor": 0.474,
+      "ambient_lst": 35.5,
+      "heat_risk": 0.389,
+      "road_type": "tree_lined_street",
+      "geometry": [
+        [
+          73.843,
+          18.516
+        ],
+        [
+          73.842,
+          18.519
+        ]
+      ]
+    },
+    {
+      "source": "FC_ROAD_SOUTH",
+      "target": "FC_ROAD_CAMPUS",
+      "length_meters": 542.8,
+      "shade_factor": 0.676,
+      "ambient_lst": 35.3,
+      "heat_risk": 0.379,
+      "road_type": "canopy_corridor",
+      "geometry": [
+        [
+          73.842,
+          18.519
+        ],
+        [
+          73.8402,
+          18.5236
+        ]
+      ]
+    },
+    {
+      "source": "FC_ROAD_CAMPUS",
+      "target": "SHIVAJINAGAR_COURT",
+      "length_meters": 1100.6,
+      "shade_factor": 0.423,
+      "ambient_lst": 35.8,
+      "heat_risk": 0.414,
+      "road_type": "avenue",
+      "geometry": [
+        [
+          73.8402,
+          18.5236
+        ],
+        [
+          73.85,
+          18.527
+        ]
+      ]
+    },
+    {
+      "source": "SHIVAJINAGAR_COURT",
+      "target": "SHIVAJINAGAR_STATION",
+      "length_meters": 646.3,
+      "shade_factor": 0.202,
+      "ambient_lst": 36.8,
+      "heat_risk": 0.485,
+      "road_type": "transit_link",
+      "geometry": [
+        [
+          73.85,
+          18.527
+        ],
+        [
+          73.8528,
+          18.5322
+        ]
+      ]
+    },
+    {
+      "source": "DECCAN_GYMKHANA",
+      "target": "RIVER_WALK_SOUTH",
+      "length_meters": 688.5,
+      "shade_factor": 0.484,
+      "ambient_lst": 35.4,
+      "heat_risk": 0.382,
+      "road_type": "river_access",
+      "geometry": [
+        [
+          73.843,
+          18.516
+        ],
+        [
+          73.848,
+          18.512
+        ]
+      ]
+    },
+    {
+      "source": "RIVER_WALK_SOUTH",
+      "target": "RIVER_WALK_MID",
+      "length_meters": 1044.0,
+      "shade_factor": 0.614,
+      "ambient_lst": 35.9,
+      "heat_risk": 0.419,
+      "road_type": "greenway",
+      "geometry": [
+        [
+          73.848,
+          18.512
+        ],
+        [
+          73.851,
+          18.521
+        ]
+      ]
+    },
+    {
+      "source": "RIVER_WALK_MID",
+      "target": "RIVER_WALK_NORTH",
+      "length_meters": 1422.8,
+      "shade_factor": 0.524,
+      "ambient_lst": 36.5,
+      "heat_risk": 0.462,
+      "road_type": "greenway",
+      "geometry": [
+        [
+          73.851,
+          18.521
+        ],
+        [
+          73.858,
+          18.532
+        ]
+      ]
+    },
+    {
+      "source": "RIVER_WALK_NORTH",
+      "target": "SHIVAJINAGAR_STATION",
+      "length_meters": 549.3,
+      "shade_factor": 0.311,
+      "ambient_lst": 36.8,
+      "heat_risk": 0.485,
+      "road_type": "bridge_link",
+      "geometry": [
+        [
+          73.858,
+          18.532
+        ],
+        [
+          73.8528,
+          18.5322
+        ]
+      ]
+    },
+    {
+      "source": "RIVER_WALK_NORTH",
+      "target": "PUNE_STATION_WEST",
+      "length_meters": 1144.4,
+      "shade_factor": 0.471,
+      "ambient_lst": 37.9,
+      "heat_risk": 0.565,
+      "road_type": "sangam_green_corridor",
+      "geometry": [
+        [
+          73.858,
+          18.532
+        ],
+        [
+          73.868,
+          18.528
+        ]
+      ]
+    },
+    {
+      "source": "RIVER_WALK_MID",
+      "target": "SHANIWAR_WADA",
+      "length_meters": 479.5,
+      "shade_factor": 0.276,
+      "ambient_lst": 38.1,
+      "heat_risk": 0.577,
+      "road_type": "ghat_walk",
+      "geometry": [
+        [
+          73.851,
+          18.521
+        ],
+        [
+          73.8553,
+          18.5196
+        ]
+      ]
+    },
+    {
+      "source": "RIVER_WALK_MID",
+      "target": "JANGALI_MAHARAJ_RD",
+      "length_meters": 572.2,
+      "shade_factor": 0.479,
+      "ambient_lst": 36.6,
+      "heat_risk": 0.472,
+      "road_type": "shaded_connector",
+      "geometry": [
+        [
+          73.851,
+          18.521
+        ],
+        [
+          73.846,
+          18.523
+        ]
+      ]
+    },
+    {
+      "source": "SHANIWAR_WADA",
+      "target": "KASBA_PETH",
+      "length_meters": 472.1,
+      "shade_factor": 0.074,
+      "ambient_lst": 39.2,
+      "heat_risk": 0.656,
+      "road_type": "historic_lane",
+      "geometry": [
+        [
+          73.8553,
+          18.5196
+        ],
+        [
+          73.859,
+          18.522
+        ]
+      ]
+    },
+    {
+      "source": "KASBA_PETH",
+      "target": "SOMWAR_PETH",
+      "length_meters": 771.3,
+      "shade_factor": 0.1,
+      "ambient_lst": 38.8,
+      "heat_risk": 0.626,
+      "road_type": "urban_lane",
+      "geometry": [
+        [
+          73.859,
+          18.522
+        ],
+        [
+          73.866,
+          18.524
+        ]
+      ]
+    },
+    {
+      "source": "SOMWAR_PETH",
+      "target": "PUNE_STATION_WEST",
+      "length_meters": 490.0,
+      "shade_factor": 0.187,
+      "ambient_lst": 39.1,
+      "heat_risk": 0.65,
+      "road_type": "station_approach",
+      "geometry": [
+        [
+          73.866,
+          18.524
+        ],
+        [
+          73.868,
+          18.528
+        ]
+      ]
+    },
+    {
+      "source": "PUNE_STATION_WEST",
+      "target": "PUNE_STATION",
+      "length_meters": 677.0,
+      "shade_factor": 0.115,
+      "ambient_lst": 40.0,
+      "heat_risk": 0.715,
+      "road_type": "station_plaza",
+      "geometry": [
+        [
+          73.868,
+          18.528
+        ],
+        [
+          73.8744,
+          18.5284
+        ]
+      ]
+    },
+    {
+      "source": "FC_ROAD_SOUTH",
+      "target": "JANGALI_MAHARAJ_RD",
+      "length_meters": 611.4,
+      "shade_factor": 0.537,
+      "ambient_lst": 36.2,
+      "heat_risk": 0.443,
+      "road_type": "cross_street",
+      "geometry": [
+        [
+          73.842,
+          18.519
+        ],
+        [
+          73.846,
+          18.523
+        ]
+      ]
+    },
+    {
+      "source": "JANGALI_MAHARAJ_RD",
+      "target": "SHIVAJINAGAR_COURT",
+      "length_meters": 611.4,
+      "shade_factor": 0.439,
+      "ambient_lst": 36.7,
+      "heat_risk": 0.478,
+      "road_type": "shaded_avenue",
+      "geometry": [
+        [
+          73.846,
+          18.523
+        ],
+        [
+          73.85,
+          18.527
+        ]
+      ]
+    },
+    {
+      "source": "BUDHWAR_PETH",
+      "target": "TILAK_ROAD_MID",
+      "length_meters": 1146.3,
+      "shade_factor": 0.136,
+      "ambient_lst": 40.9,
+      "heat_risk": 0.775,
+      "road_type": "cross_alley",
+      "geometry": [
+        [
+          73.8585,
+          18.5165
+        ],
+        [
+          73.851,
+          18.509
+        ]
+      ]
+    },
+    {
+      "source": "BUDHWAR_PETH",
+      "target": "NANA_PETH",
+      "length_meters": 916.7,
+      "shade_factor": 0.071,
+      "ambient_lst": 41.8,
+      "heat_risk": 0.843,
+      "road_type": "dense_bazaar_connector",
+      "geometry": [
+        [
+          73.8585,
+          18.5165
+        ],
+        [
+          73.865,
+          18.511
+        ]
+      ]
+    },
+    {
+      "source": "KASBA_PETH",
+      "target": "RIVER_WALK_MID",
+      "length_meters": 851.6,
+      "shade_factor": 0.362,
+      "ambient_lst": 37.5,
+      "heat_risk": 0.535,
+      "road_type": "ghat_access",
+      "geometry": [
+        [
+          73.859,
+          18.522
+        ],
+        [
+          73.851,
+          18.521
+        ]
+      ]
+    },
+    {
+      "source": "NANA_PETH",
+      "target": "KEM_HOSPITAL_ZONE",
+      "length_meters": 1126.2,
+      "shade_factor": 0.193,
+      "ambient_lst": 41.3,
+      "heat_risk": 0.808,
+      "road_type": "hospital_link",
+      "geometry": [
+        [
+          73.865,
+          18.511
+        ],
+        [
+          73.87,
+          18.52
+        ]
+      ]
+    },
+    {
+      "source": "KEM_HOSPITAL_ZONE",
+      "target": "PUNE_STATION_WEST",
+      "length_meters": 909.2,
+      "shade_factor": 0.264,
+      "ambient_lst": 40.1,
+      "heat_risk": 0.723,
+      "road_type": "connector",
+      "geometry": [
+        [
+          73.87,
+          18.52
+        ],
+        [
+          73.868,
+          18.528
+        ]
+      ]
+    },
+    {
+      "source": "SOMWAR_PETH",
+      "target": "RAVIWAR_PETH",
+      "length_meters": 1183.3,
+      "shade_factor": 0.088,
+      "ambient_lst": 39.3,
+      "heat_risk": 0.667,
+      "road_type": "bazaar_link",
+      "geometry": [
+        [
+          73.866,
+          18.524
+        ],
+        [
+          73.862,
+          18.514
+        ]
+      ]
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+# Master Configuration for Urban Cooling Planner
+project:
+  name: "Urban Cooling Planner"
+  version: "1.0.0"
+  city: "Pune, India"
+  seed: 42
+
+paths:
+  data_raw: "data/raw"
+  data_processed: "data/processed"
+  data_synthetic: "data/synthetic"
+  ml_artifacts: "ml/artifacts"
+  grid_geojson: "data/processed/pune_100m_grid.geojson"
+  grid_parquet: "data/processed/pune_100m_grid.parquet"
+  street_graph: "data/processed/pune_pedestrian_network.json"
+
+database:
+  use_postgis: false  # Auto-detects PostGIS; falls back to GeoPandas engine if unavailable
+  url: "postgresql://postgres:postgres@localhost:5432/pune_cooling_planner"
+
+ml:
+  target_continuous: "lst_celsius"
+  target_classification: "is_critical_hotspot"
+  split:
+    train_ratio: 0.70
+    val_ratio: 0.15
+    test_ratio: 0.15
+    spatial_kfold: 5
+  lightgbm:
+    n_estimators: 150
+    learning_rate: 0.05
+    max_depth: 6
+    subsample: 0.8
+    colsample_bytree: 0.8
+  gnn:
+    hidden_dim: 32
+    num_layers: 2
+    dropout: 0.15
+    epochs: 100
+    learning_rate: 0.01
+
+optimizer:
+  default_budget_inr: 1500000.0  # 15 Lakh INR
+  currency: "INR"
+  interventions:
+    trees:
+      name: "Urban Tree Canopy"
+      cost_per_unit_inr: 15000.0
+      cooling_delta_celsius: 1.5
+      influence_radius_meters: 50.0
+      max_per_cell: 10
+      suitability_min_canopy: 0.0
+      suitability_max_canopy: 0.35
+    cool_roofs:
+      name: "High-Albedo Cool Roofs"
+      cost_per_unit_inr: 35000.0
+      cooling_delta_celsius: 2.2
+      influence_radius_meters: 30.0
+      max_per_cell: 5
+      suitability_min_built_up: 0.40
+    water_points:
+      name: "Misting & Hydration Station"
+      cost_per_unit_inr: 50000.0
+      cooling_delta_celsius: 1.0
+      influence_radius_meters: 40.0
+      max_per_cell: 2
+      suitability_min_vuln: 0.50
+    shaded_stops:
+      name: "Shaded Transit Stops"
+      cost_per_unit_inr: 80000.0
+      cooling_delta_celsius: 2.0
+      influence_radius_meters: 60.0
+      max_per_cell: 2
+      suitability_transit_required: true
+    cooling_centers:
+      name: "Community Cooling Refuge"
+      cost_per_unit_inr: 250000.0
+      cooling_delta_celsius: 4.5
+      influence_radius_meters: 350.0
+      max_per_cell: 1
+      suitability_min_vuln: 0.65
+      min_separation_meters: 400.0
+
+routing:
+  default_heat_avoidance_weight: 1.5  # gamma in cost = length * (1 + gamma * heat * (1 - shade))
+  walking_speed_kmh: 4.5
+  max_search_distance_meters: 8000.0
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  reload: false
